@@ -24,12 +24,12 @@ class Basline(nn.Module):
             if type(m) == nn.Linear or type(m) == nn.Conv2d or type(m) == nn.Parameter:
                 nn.init.kaiming_normal_(m.weight)
                 
-        if self.args.use_kaiming_init:
-            self.attention.apply(init_weights)
-            self.linear.apply(init_weights)
+        # if self.args.use_kaiming_init:
+            # self.attention.apply(init_weights)
+            # self.linear.apply(init_weights)
             
-            self.sketch_attention.apply(init_weights)
-            self.sketch_linear.apply(init_weights)
+            # self.sketch_attention.apply(init_weights)
+            # self.sketch_linear.apply(init_weights)
             
     def forward(self, batch):
         sketch_img = batch['sketch_img'].to(device)
