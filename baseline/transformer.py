@@ -144,6 +144,7 @@ class Transformer(nn.Module):
         return self.dropout(projected)
         
     def forward(self, src, tgt=None, src_pad_mask=None, tgt_pad_mask=None):
+        tgt=src.clone()
         if self.use_embedding:
             # Trường hợp input là token IDs
             src_emb = self.dropout(self.positional_encoding(
@@ -169,7 +170,7 @@ class Transformer(nn.Module):
         # Nếu chỉ có encoder (encoder-only model)
         if tgt is None:
             output = self.fc(enc_output)
-            return F.normalize(output)
+            return output
         
         # Decoder với causal mask
         tgt_mask = self.generate_square_subsequent_mask(tgt_emb.size(1))
@@ -183,7 +184,7 @@ class Transformer(nn.Module):
         # Output projection
         output = self.fc(dec_output)
         
-        return F.normalize(output)
+        return output
 
     def generate_square_subsequent_mask(self, sz):
         """Tạo causal mask cho decoder"""
