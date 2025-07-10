@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from baseline.backbones import InceptionV3
-from baseline.attention import Linear_global, SelfAttention, AutoEncoder
+from baseline.attention import Linear_global, SelfAttention
+from baseline.transformer import Transformer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -12,14 +13,12 @@ class Basline(nn.Module):
         super(Basline, self).__init__()
         self.args = args
         self.sample_embedding_network = InceptionV3(args=args).to(device)
-        self.attention = SelfAttention(args).to(device)
-        self.ae = AutoEncoder()
-        self.linear = Linear_global(feature_num=self.args.output_size).to(device)
+        self.attention = Transformer().to(device)
+        # self.linear = Linear_global(feature_num=self.args.output_size).to(device)
         
         self.sketch_embedding_network = InceptionV3(args=args).to(device)
-        self.sketch_attention = SelfAttention(args).to(device)
-        self.sketch_ae = AutoEncoder()
-        self.sketch_linear = Linear_global(feature_num=self.args.output_size).to(device)
+        self.sketch_attention = Transformer().to(device)
+        # self.sketch_linear = Linear_global(feature_num=self.args.output_size).to(device)
     
         def init_weights(m):
             if type(m) == nn.Linear or type(m) == nn.Conv2d or type(m) == nn.Parameter:
@@ -27,11 +26,9 @@ class Basline(nn.Module):
                 
         if self.args.use_kaiming_init:
             self.attention.apply(init_weights)
-            self.ae.apply(init_weights)
             self.linear.apply(init_weights)
             
             self.sketch_attention.apply(init_weights)
-            self.sketch_ae.apply(init_weights)
             self.sketch_linear.apply(init_weights)
             
     def forward(self, batch):
@@ -47,27 +44,20 @@ class Basline(nn.Module):
         negative_feature = self.attention(negative_feature)
         sketch_feature = self.sketch_attention(sketch_feature)
         
-        positive_feature = self.ae(positive_feature)
-        negative_feature = self.ae(negative_feature)
-        sketch_feature = self.sketch_ae(sketch_feature)
-        
-        positive_feature = self.linear(positive_feature)
-        negative_feature = self.linear(negative_feature)
-        sketch_feature = self.sketch_linear(sketch_feature)
+        # positive_feature = self.linear(positive_feature)
+        # negative_feature = self.linear(negative_feature)
+        # sketch_feature = self.sketch_linear(sketch_feature)
         
         return sketch_feature, positive_feature, negative_feature
     
     def test_forward(self, batch):
-        sketch_feature = self.sketch_embedding_network(batch['sketch_imgs'].to(device))
+        sketch_feature = self.sketch_embedding_network(batch['sketch_img'].to(device))
         positive_feature = self.sample_embedding_network(batch['positive_img'].to(device))
         
         positive_feature = self.attention(positive_feature)
         sketch_feature = self.sketch_attention(sketch_feature)
         
-        positive_feature = self.ae(positive_feature)
-        sketch_feature = self.sketch_ae(sketch_feature)
-        
-        positive_feature = self.linear(positive_feature)
-        sketch_feature = self.sketch_linear(sketch_feature)
+        # positive_feature = self.linear(positive_feature)
+        # sketch_feature = self.sketch_linear(sketch_feature)
             
         return sketch_feature, positive_feature

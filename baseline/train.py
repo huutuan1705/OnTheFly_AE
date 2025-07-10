@@ -31,9 +31,12 @@ def evaluate_model(model, dataloader_test):
             sketch_features_all = torch.FloatTensor().to(device)
             for data_sketch in batch['sketch_imgs']:
                 # print(data_sketch.shape) # (1, 25, 3, 299, 299)
-                sketch_feature = model.sketch_linear(model.sketch_attention(
+                # sketch_feature = model.sketch_linear(model.sketch_attention(
+                #     model.sketch_embedding_network(data_sketch.to(device))
+                # ))
+                sketch_feature = model.sketch_attention(
                     model.sketch_embedding_network(data_sketch.to(device))
-                ))
+                )
                 # print("sketch_feature.shape: ", sketch_feature.shape) #(25, 2048)
                 sketch_features_all = torch.cat((sketch_features_all, sketch_feature.detach()))
             
@@ -42,8 +45,10 @@ def evaluate_model(model, dataloader_test):
             sketch_names.extend(batch['sketch_path'])
             
             if batch['positive_path'][0] not in image_names:
-                positive_feature = model.linear(model.attention(
-                    model.sample_embedding_network(batch['positive_img'].to(device))))
+                # positive_feature = model.linear(model.attention(
+                #     model.sample_embedding_network(batch['positive_img'].to(device))))
+                positive_feature = model.attention(
+                    model.sample_embedding_network(batch['positive_img'].to(device)))
                 image_array_tests = torch.cat((image_array_tests, positive_feature))
                 image_names.extend(batch['positive_path'])
         
@@ -127,18 +132,18 @@ def train_model(model, args):
         if top5_eval > top5:
             top1, top5, top10 = top1_eval, top5_eval, top10_eval
             torch.save(model.state_dict(), "best_model.pth")
-            torch.save(
-                {
-                    'sample_embedding_network': model.sample_embedding_network.state_dict(),
-                    'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
-                }, args.dataset_name + '_backbone.pth')
+            # torch.save(
+            #     {
+            #         'sample_embedding_network': model.sample_embedding_network.state_dict(),
+            #         'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
+            #     }, args.dataset_name + '_backbone.pth')
             
-            torch.save({'attention': model.attention.state_dict(),
-                        'sketch_attention': model.sketch_attention.state_dict(),
-                        }, args.dataset_name + '_attention.pth')
-            torch.save({'linear': model.linear.state_dict(),
-                        'sketch_linear': model.sketch_linear.state_dict(),
-                        }, args.dataset_name + '_linear.pth')
+            # torch.save({'attention': model.attention.state_dict(),
+            #             'sketch_attention': model.sketch_attention.state_dict(),
+            #             }, args.dataset_name + '_attention.pth')
+            # torch.save({'linear': model.linear.state_dict(),
+            #             'sketch_linear': model.sketch_linear.state_dict(),
+            #             }, args.dataset_name + '_linear.pth')
         print('Top 1 accuracy:  {:.4f}'.format(top1_eval))
         print('Top 5 accuracy:  {:.4f}'.format(top5_eval))
         print('Top 10 accuracy: {:.4f}'.format(top10_eval))
