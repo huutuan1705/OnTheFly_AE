@@ -5,6 +5,12 @@ import torchvision.transforms as transforms
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+def np2th(weights, conv=False):
+    "Convert HWIO to OIHW"
+    if conv:
+        weights = weights.transpose([3, 2, 0, 1])
+    return torch.from_numpy(weights)
+
 def get_transform(type):
     if type == 'train':
         transform_list = [

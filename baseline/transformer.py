@@ -1,230 +1,143 @@
+import math
+import os
+import copy
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import math
-import numpy as np
+from torch.nn import Dropout, Linear, LayerNorm, Softmax, GELU
 
-# Sử dụng MultiHeadAttention có sẵn của PyTorch
+PATCH_SIZE = 1
+HIDDEN_SIZE = 768
+MLP_DIM = 3072
+NUM_HEADS = 8
+NUM_LAYERS = 1
+ATTENTION_DROPOUT_RATE = 0.0
+DROPOUT_RATE = 0.1
 
-class PositionwiseFeedForward(nn.Module):
-    def __init__(self, d_model, d_ff):
-        super(PositionwiseFeedForward, self).__init__()
-        self.linear1 = nn.Linear(d_model, d_ff)
-        self.linear2 = nn.Linear(d_ff, d_model)
-        self.relu = nn.ReLU()
+class Attention(nn.Module):
+    def __init__(self):
+        super(Attention, self).__init__() 
+        self.num_attention_heads = NUM_HEADS
+        self.attention_head_size = int(HIDDEN_SIZE / self.num_attention_heads)
+        self.all_head_size = self.num_attention_heads * self.attention_head_size
+        
+        self.query = Linear(HIDDEN_SIZE, self.all_head_size)
+        self.key = Linear(HIDDEN_SIZE, self.all_head_size)
+        self.value = Linear(HIDDEN_SIZE, self.all_head_size)
+        
+        self.out = Linear(HIDDEN_SIZE, HIDDEN_SIZE)
+        self.attention_dropout = Dropout(ATTENTION_DROPOUT_RATE)
+        self.proj_dropout = Dropout(DROPOUT_RATE)
+        
+        self.softmax = Softmax(dim=-1)
+        
+    def transpose_for_scores(self, x):
+        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
+        x = x.view(*new_x_shape)
+        return x.permute(0, 2, 1, 3)
+    
+    def forward(self, hidden_states):
+        mixed_query_layer = self.query(hidden_states)
+        mixed_key_layer = self.key(hidden_states)
+        mixed_value_layer = self.value(hidden_states)
+        
+        query_layer = self.transpose_for_scores(mixed_query_layer)
+        key_layer = self.transpose_for_scores(mixed_key_layer)
+        value_layer = self.transpose_for_scores(mixed_value_layer)
+        
+        # Take the dot product between "query" and "key" to get the raw attention scores.
+        attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
+        attention_scores = attention_scores / math.sqrt(self.attention_head_size)
+        attention_probs = self.softmax(attention_scores)
+        
+        # This is actually dropping out entire tokens to attend to, which might
+        weights = attention_probs
+        attention_probs = self.attention_dropout(attention_probs)
+        
+        context_layer = torch.matmul(attention_probs, value_layer)
+        context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
+        new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
+        context_layer = context_layer.view(*new_context_layer_shape)
+        attention_output = self.out(context_layer)
+        attention_output = self.proj_dropout(attention_output)
+        return attention_output, weights
+    
+
+class Mlp(nn.Module):
+    def __init__(self):
+        super(Mlp, self).__init__()
+        self.fc1 = Linear(HIDDEN_SIZE, MLP_DIM)
+        self.fc2 = Linear(MLP_DIM, HIDDEN_SIZE)
+        self.act = GELU()
+        self.dropout = Dropout(DROPOUT_RATE)
+        
+        self._init_weights()
+        
+    def _init_weights(self):
+        nn.init.xavier_uniform_(self.fc1.weight)
+        nn.init.xavier_uniform_(self.fc2.weight)
+        nn.init.normal_(self.fc1.bias, std=1e-6)
+        nn.init.normal_(self.fc2.bias, std=1e-6)
         
     def forward(self, x):
-        return self.linear2(self.relu(self.linear1(x)))
-
-class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, max_seq_length=5000):
-        super(PositionalEncoding, self).__init__()
+        x = self.fc1(x)
+        x = self.act(x)
+        x = self.dropout(x)
+        x = self.fc2(x)
+        x = self.dropout(x)
+        return x
         
-        pe = torch.zeros(max_seq_length, d_model)
-        position = torch.arange(0, max_seq_length, dtype=torch.float).unsqueeze(1)
-        
-        div_term = torch.exp(torch.arange(0, d_model, 2).float() * 
-                           (-math.log(10000.0) / d_model))
-        
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
-        
-        self.register_buffer('pe', pe.unsqueeze(0))
+class Embeddings(nn.Module):
+    def __init__(self, img_size):
+        super(Embeddings, self).__init__()
+        patch_size = PATCH_SIZE
+        n_patches = (img_size[0] // patch_size[0]) * (img_size[1] // patch_size[1])
+        self.pos_embeddings = nn.parameter.Parameter(torch.zeros(1, n_patches + 1, HIDDEN_SIZE))
+        self.dropout = Dropout(DROPOUT_RATE)
         
     def forward(self, x):
-        return x + self.pe[:, :x.size(1)]
+        x = x.flatten(2)
+        x = x.transpose(-1, -2)
+        
+        embeddings = x + self.pos_embeddings
+        embeddings = self.dropout(embeddings)
+        return embeddings
 
-class EncoderLayer(nn.Module):
-    def __init__(self, d_model, n_heads, d_ff, dropout):
-        super(EncoderLayer, self).__init__()
-        self.self_attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout, batch_first=True)
-        self.feed_forward = PositionwiseFeedForward(d_model, d_ff)
-        self.norm1 = nn.LayerNorm(d_model)
-        self.norm2 = nn.LayerNorm(d_model)
-        self.dropout = nn.Dropout(dropout)
+class Block(nn.Module):
+    def __init__(self):
+        super(Block, self).__init__()
+        self.hidden_size = HIDDEN_SIZE
+        self.attention_norm = LayerNorm(self.hidden_size, eps=1e-6)
+        self.mlp_norm = LayerNorm(self.hidden_size, eps=1e-6)
+        self.mlp = Mlp()
+        self.attention = Attention()
         
-    def forward(self, x, mask=None):
-        # Self-attention
-        attn_output, _ = self.self_attn(x, x, x, key_padding_mask=mask)
-        x = self.norm1(x + self.dropout(attn_output))
+    def forward(self, x):
+        residual = x
+        x = self.attention_norm(x)
+        x, weights = self.attention(x)
+        x = x + residual
         
-        # Feed forward
-        ff_output = self.feed_forward(x)
-        x = self.norm2(x + self.dropout(ff_output))
-        
-        return x
+        residual = x
+        x = self.mlp_norm(x)
+        x = self.mlp(x)
+        x = x + residual
+        return x, weights
+    
 
-class DecoderLayer(nn.Module):
-    def __init__(self, d_model, n_heads, d_ff, dropout):
-        super(DecoderLayer, self).__init__()
-        self.self_attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout, batch_first=True)
-        self.cross_attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout, batch_first=True)
-        self.feed_forward = PositionwiseFeedForward(d_model, d_ff)
-        self.norm1 = nn.LayerNorm(d_model)
-        self.norm2 = nn.LayerNorm(d_model)
-        self.norm3 = nn.LayerNorm(d_model)
-        self.dropout = nn.Dropout(dropout)
-        
-    def forward(self, x, enc_output, src_mask=None, tgt_mask=None):
-        # Self-attention với causal mask
-        attn_output, _ = self.self_attn(x, x, x, attn_mask=tgt_mask)
-        x = self.norm1(x + self.dropout(attn_output))
-        
-        # Cross-attention
-        attn_output, _ = self.cross_attn(x, enc_output, enc_output, key_padding_mask=src_mask)
-        x = self.norm2(x + self.dropout(attn_output))
-        
-        # Feed forward
-        ff_output = self.feed_forward(x)
-        x = self.norm3(x + self.dropout(ff_output))
-        
-        return x
-
-class Transformer(nn.Module):
-    def __init__(self, input_dim=2048, tgt_vocab_size=None, d_model=64, n_heads=8, 
-                 n_layers=1, d_ff=2048, max_seq_length=5000, dropout=0.1, 
-                 use_embedding=False):
-        super(Transformer, self).__init__()
-        
-        self.d_model = d_model
-        self.use_embedding = use_embedding
-        
-        # Projection layer cho feature maps từ CNN
-        if not use_embedding:
-            self.input_projection = nn.Linear(input_dim, d_model)
-        else:
-            # Embedding layers (cho text input)
-            self.encoder_embedding = nn.Embedding(input_dim, d_model)
-            if tgt_vocab_size is not None:
-                self.decoder_embedding = nn.Embedding(tgt_vocab_size, d_model)
-        
-        # Positional encoding
-        self.positional_encoding = PositionalEncoding(d_model, max_seq_length)
-        
-        # 2D positional encoding cho feature maps
-        self.pos_encoding_2d = nn.Parameter(torch.randn(1, 64, d_model))  # 8x8 = 64 positions
-        
-        # Encoder layers
-        self.encoder_layers = nn.ModuleList([
-            EncoderLayer(d_model, n_heads, d_ff, dropout) 
-            for _ in range(n_layers)
-        ])
-        
-        # Decoder layers
-        self.decoder_layers = nn.ModuleList([
-            DecoderLayer(d_model, n_heads, d_ff, dropout) 
-            for _ in range(n_layers)
-        ])
-        
-        # Final linear layer
-        if tgt_vocab_size is not None:
-            self.fc = nn.Linear(d_model, tgt_vocab_size)
-        else:
-            self.fc = nn.Linear(d_model, d_model)  # hoặc output dimension khác
-        self.dropout = nn.Dropout(dropout)
-        
-    def prepare_feature_maps(self, feature_maps):
-        """
-        Chuyển đổi feature maps (B, C, H, W) thành sequence (B, seq_len, d_model)
-        feature_maps: (batch_size, 2048, 8, 8)
-        """
-        batch_size, channels, height, width = feature_maps.shape
-        
-        # Flatten spatial dimensions: (B, C, H, W) -> (B, H*W, C)
-        feature_maps = feature_maps.view(batch_size, channels, -1).transpose(1, 2)
-        
-        # Project to model dimension: (B, H*W, C) -> (B, H*W, d_model)
-        projected = self.input_projection(feature_maps)
-        
-        # Add 2D positional encoding
-        seq_len = projected.size(1)
-        pos_encoding = self.pos_encoding_2d[:, :seq_len, :]
-        projected = projected + pos_encoding
-        
-        return self.dropout(projected)
-        
-    def forward(self, src, tgt=None, src_pad_mask=None, tgt_pad_mask=None):
-        tgt=src.clone()
-        if self.use_embedding:
-            # Trường hợp input là token IDs
-            src_emb = self.dropout(self.positional_encoding(
-                self.encoder_embedding(src) * math.sqrt(self.d_model)))
-            if tgt is not None:
-                tgt_emb = self.dropout(self.positional_encoding(
-                    self.decoder_embedding(tgt) * math.sqrt(self.d_model)))
-        else:
-            # Trường hợp input là feature maps từ CNN
-            src_emb = self.prepare_feature_maps(src)
-            if tgt is not None:
-                if hasattr(self, 'decoder_embedding'):
-                    tgt_emb = self.dropout(self.positional_encoding(
-                        self.decoder_embedding(tgt) * math.sqrt(self.d_model)))
-                else:
-                    tgt_emb = self.prepare_feature_maps(tgt)
-        
-        # Encoder
-        enc_output = src_emb
-        for layer in self.encoder_layers:
-            enc_output = layer(enc_output, src_pad_mask)
-        
-        # Nếu chỉ có encoder (encoder-only model)
-        if tgt is None:
-            output = self.fc(enc_output)
-            return output
-        
-        # Decoder với causal mask
-        tgt_mask = self.generate_square_subsequent_mask(tgt_emb.size(1))
-        if tgt_emb.is_cuda:
-            tgt_mask = tgt_mask.cuda()
-            
-        dec_output = tgt_emb
-        for layer in self.decoder_layers:
-            dec_output = layer(dec_output, enc_output, src_pad_mask, tgt_mask)
-        
-        # Output projection
-        output = self.fc(dec_output)
-        
-        return output
-
-    def generate_square_subsequent_mask(self, sz):
-        """Tạo causal mask cho decoder"""
-        mask = torch.triu(torch.ones(sz, sz), diagonal=1)
-        mask = mask.masked_fill(mask == 1, float('-inf'))
-        return mask
+class Encoder(nn.Module):
+    def __init__(self):
+        super(Encoder, self).__init__()
+        self.layer = nn.ModuleList()
+        self.encoder_norm = LayerNorm(HIDDEN_SIZE, eps=1e-6)
+        for _ in range(NUM_LAYERS):
+            layer = Block()
+            self.layer.append(copy.deepcopy(layer))
     
-    def create_pad_mask(self, seq, pad_idx=0):
-        """Tạo padding mask"""
-        return (seq == pad_idx)
-    
-if __name__ == "__main__":
-    input_dim = 2048  # Channels của feature maps
-    d_model = 512
-    n_heads = 8
-    n_layers = 1
-    d_ff = 2048
-    dropout = 0.1
-    
-    # Tạo model (encoder-only)
-    model = Transformer(
-        input_dim=input_dim,
-        tgt_vocab_size=None,  # Không cần target vocab cho encoder-only
-        d_model=d_model,
-        n_heads=n_heads,
-        n_layers=n_layers,
-        d_ff=d_ff,
-        dropout=dropout,
-        use_embedding=False  # Không sử dụng embedding
-    )
-    
-    # Tạo dữ liệu test - feature maps từ CNN
-    batch_size = 16
-    feature_maps = torch.randn(batch_size, 2048, 8, 8)  # (B, C, H, W)
-    
-    # Forward pass
-    model.eval()
-    with torch.no_grad():
-        output = model(feature_maps)  # Chỉ encoder
-        print(f"Input shape: {feature_maps.shape}")
-        print(f"Output shape: {output.shape}")  # (B, 64, d_model)
-        print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
-    
+    def forward(self, hidden_states):
+        attention_weights = []
+        for layer_block in self.layer:
+            hidden_states, weights = layer_block(hidden_states)
+            attention_weights.append(weights)
+        encoded = self.encoder_norm(hidden_states)
+        return encoded, attention_weights
