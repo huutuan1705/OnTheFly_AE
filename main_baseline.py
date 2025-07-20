@@ -1,6 +1,6 @@
 import torch
 import argparse
-from baseline.model import Basline
+from baseline.model import Siamese_SBIR
 from baseline.train import train_model
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -24,5 +24,5 @@ if __name__ == "__main__":
     parsers.add_argument('--epochs', type=int, default=300)
     
     args = parsers.parse_args()
-    model = Basline(args).to(device)
+    model = Siamese_SBIR(args).to(device)
     train_model(model, args)
