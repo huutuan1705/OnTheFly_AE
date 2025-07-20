@@ -98,6 +98,7 @@ def evaluate_model(model, dataloader_test):
         return top1_accuracy, top5_accuracy, top10_accuracy, meanMA, meanMB
     
 def train_model(model, args):
+    model = model.to(device)
     dataloader_train, dataloader_test = get_dataloader(args)
     # if args.load_pretrained:
     #     model.load_state_dict(torch.load(args.pretrained))
