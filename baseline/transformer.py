@@ -88,10 +88,10 @@ class Mlp(nn.Module):
         return x
         
 class Embeddings(nn.Module):
-    def __init__(self, feature_maps):
+    def __init__(self):
         super(Embeddings, self).__init__()
         patch_size = PATCH_SIZE
-        n_patches = (feature_maps.shape[2] // patch_size) * (feature_maps.shape[3] // patch_size)
+        n_patches = (8 // patch_size) * (8 // patch_size)
         self.pos_embeddings = nn.parameter.Parameter(torch.zeros(1, n_patches + 1, HIDDEN_SIZE))
         self.dropout = Dropout(DROPOUT_RATE)
         
@@ -141,3 +141,14 @@ class Encoder(nn.Module):
             attention_weights.append(weights)
         encoded = self.encoder_norm(hidden_states)
         return encoded, attention_weights
+    
+class Transformer(nn.Module):
+    def __init__(self):
+        super(Transformer, self).__init__()
+        self.embeddings = Embeddings()
+        self.encoder = Encoder()
+    
+    def forward(self, x):
+        embedding_output = self.embeddings(x)
+        return self.encoder(embedding_output)
+    

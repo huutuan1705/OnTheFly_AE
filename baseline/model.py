@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from baseline.backbones import InceptionV3
 from baseline.attention import Linear_global, SelfAttention
-from baseline.transformer import Encoder
+from baseline.transformer import Transformer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -13,10 +13,10 @@ class Siamese_SBIR(nn.Module):
         super(Siamese_SBIR, self).__init__()
         self.args = args
         self.sample_embedding_network = InceptionV3(args=args)
-        self.attention = Encoder()
+        self.attention = Transformer()
         
         self.sketch_embedding_network = InceptionV3(args=args)
-        self.sketch_attention = Encoder()
+        self.sketch_attention = Transformer()
     
             
     def forward(self, batch):
