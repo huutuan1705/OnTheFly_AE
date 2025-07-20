@@ -12,11 +12,11 @@ class Siamese_SBIR(nn.Module):
     def __init__(self, args):
         super(Siamese_SBIR, self).__init__()
         self.args = args
-        self.sample_embedding_network = InceptionV3(args=args)
-        self.attention = Encoder()
+        self.sample_embedding_network = InceptionV3(args=args).to(device=device)
+        self.attention = Encoder().to(device=device)
         
-        self.sketch_embedding_network = InceptionV3(args=args)
-        self.sketch_attention = Encoder()
+        self.sketch_embedding_network = InceptionV3(args=args).to(device=device)
+        self.sketch_attention = Encoder().to(device=device)
     
             
     def forward(self, batch):
