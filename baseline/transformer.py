@@ -7,8 +7,8 @@ import torch.nn as nn
 from torch.nn import Dropout, Linear, LayerNorm, Softmax, GELU
 
 PATCH_SIZE = 1
-HIDDEN_SIZE = 16
-MLP_DIM = 32
+HIDDEN_SIZE = 64
+MLP_DIM = 128
 NUM_HEADS = 8
 NUM_LAYERS = 1
 ATTENTION_DROPOUT_RATE = 0.0
