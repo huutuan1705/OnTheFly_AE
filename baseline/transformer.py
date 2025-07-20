@@ -100,6 +100,7 @@ class Embeddings(nn.Module):
         x = x.transpose(-1, -2)
         
         print(x.shape)
+        print(self.pos_embeddings.shape)
         embeddings = x + self.pos_embeddings
         embeddings = self.dropout(embeddings)
         return embeddings
