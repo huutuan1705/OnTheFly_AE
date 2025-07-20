@@ -20,17 +20,17 @@ class Siamese_SBIR(nn.Module):
     
             
     def forward(self, batch):
-        sketch_img = batch['sketch_img']
-        positive_img = batch['positive_img']
-        negative_img = batch['negative_img']
+        sketch_img = batch['sketch_img'].to(device)
+        positive_img = batch['positive_img'].to(device)
+        negative_img = batch['negative_img'].to(device)
         
-        positive_feature = self.sample_embedding_network(positive_img).to(device)
-        negative_feature = self.sample_embedding_network(negative_img).to(device)
-        sketch_feature = self.sketch_embedding_network(sketch_img).to(device)
+        positive_feature = self.sample_embedding_network(positive_img)
+        negative_feature = self.sample_embedding_network(negative_img)
+        sketch_feature = self.sketch_embedding_network(sketch_img)
         
-        positive_feature, _ = self.attention(positive_feature).to(device)
-        negative_feature, _ = self.attention(negative_feature).to(device)
-        sketch_feature, _ = self.sketch_attention(sketch_feature).to(device)
+        positive_feature, _ = self.attention(positive_feature)
+        negative_feature, _ = self.attention(negative_feature)
+        sketch_feature, _ = self.sketch_attention(sketch_feature)
         
         return sketch_feature, positive_feature, negative_feature
     
