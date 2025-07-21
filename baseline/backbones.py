@@ -51,6 +51,8 @@ class InceptionV3(nn.Module):
         x = F.max_pool2d(x, kernel_size=3, stride=2)
         # N x 192 x 35 x 35
         x = self.Mixed_5b(x)
+        feature_maps_6b = x
+        
         # N x 256 x 35 x 35
         x = self.Mixed_5c(x)
         # N x 288 x 35 x 35
@@ -59,7 +61,6 @@ class InceptionV3(nn.Module):
         x = self.Mixed_6a(x)
         # N x 768 x 17 x 17
         x = self.Mixed_6b(x)
-        feature_maps_6b = x
         
         # N x 768 x 17 x 17
         x = self.Mixed_6c(x)
