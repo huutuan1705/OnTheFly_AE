@@ -116,7 +116,7 @@ class Block(nn.Module):
     def forward(self, x):
         residual = x
         x = self.attention_norm(x)
-        x, weights = self.attention(x)
+        x, weights = self.attention(x, x, x)
         x = x + residual
         
         residual = x
