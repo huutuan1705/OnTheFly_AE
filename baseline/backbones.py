@@ -59,6 +59,8 @@ class InceptionV3(nn.Module):
         x = self.Mixed_6a(x)
         # N x 768 x 17 x 17
         x = self.Mixed_6b(x)
+        feature_maps_6b = x
+        
         # N x 768 x 17 x 17
         x = self.Mixed_6c(x)
         # N x 768 x 17 x 17
@@ -72,7 +74,7 @@ class InceptionV3(nn.Module):
         # N x 2048 x 8 x 8
         x = self.Mixed_7c(x)
         
-        return x
+        return x, feature_maps_6b
         
     def fix_weights(self):
         for x in self.parameters():

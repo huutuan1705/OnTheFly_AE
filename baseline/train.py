@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from torch import optim
 from baseline.datasets import FGSBIR_Dataset
+from baseline.utils import loss_fn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -103,7 +104,7 @@ def train_model(model, args):
     # if args.load_pretrained:
     #     model.load_state_dict(torch.load(args.pretrained))
         
-    loss_fn = nn.TripletMarginLoss(margin=args.margin)
+    # loss_fn = nn.TripletMarginLoss(margin=args.margin)
     optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
     # optimizer = optim.Adam([
     #         {'params': model.sample_embedding_network.parameters(), 'lr': args.lr},
@@ -120,8 +121,8 @@ def train_model(model, args):
             model.train()
             optimizer.zero_grad()
             
-            sketch_feature, positive_feature, negative_feature = model(batch_data)
-            loss = loss_fn(sketch_feature, positive_feature, negative_feature)
+            sketch_feature, positive_feature, negative_feature, fm_6bs = model(batch_data)
+            loss = loss_fn(args, sketch_feature, positive_feature, negative_feature, fm_6bs)
             loss.backward()
             optimizer.step()
             # scheduler.step()
