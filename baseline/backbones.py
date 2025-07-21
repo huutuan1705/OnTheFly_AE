@@ -59,14 +59,14 @@ class InceptionV3(nn.Module):
         x = self.Mixed_6a(x)
         # N x 768 x 17 x 17
         x = self.Mixed_6b(x)
+        feature_maps_6b = x
+        
         # N x 768 x 17 x 17
         x = self.Mixed_6c(x)
         # N x 768 x 17 x 17
         x = self.Mixed_6d(x)
         # N x 768 x 17 x 17
         x = self.Mixed_6e(x)
-        feature_maps_6b = x
-        
         # N x 768 x 17 x 17
         x = self.Mixed_7a(x)
         # N x 1280 x 8 x 8
