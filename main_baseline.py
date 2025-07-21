@@ -21,7 +21,7 @@ if __name__ == "__main__":
     parsers.add_argument('--margin', type=float, default=0.3)
     parsers.add_argument('--threads', type=int, default=4)
     parsers.add_argument('--lr', type=float, default=0.0001)
-    parsers.add_argument('--epochs', type=int, default=300)
+    parsers.add_argument('--epochs', type=int, default=200)
     
     args = parsers.parse_args()
     model = Siamese_SBIR(args).to(device)
