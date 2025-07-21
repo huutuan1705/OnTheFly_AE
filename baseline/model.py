@@ -13,11 +13,13 @@ class Siamese_SBIR(nn.Module):
         super(Siamese_SBIR, self).__init__()
         self.args = args
         self.sample_embedding_network = InceptionV3(args=args)
-        self.attention = Transformer()
+        self.attention = SelfAttention(args)
+        self.linear = Linear_global(feature_num=64)
         
         self.sketch_embedding_network = InceptionV3(args=args)
-        self.sketch_attention = Transformer()
-    
+        self.sketch_attention = SelfAttention(args)
+        self.sketch_linear = Linear_global(feature_num=64)
+
             
     def forward(self, batch):
         sketch_img = batch['sketch_img'].to(device)
@@ -28,9 +30,13 @@ class Siamese_SBIR(nn.Module):
         negative_feature = self.sample_embedding_network(negative_img)
         sketch_feature = self.sketch_embedding_network(sketch_img)
         
-        positive_feature, _ = self.attention(positive_feature)
-        negative_feature, _ = self.attention(negative_feature)
-        sketch_feature, _ = self.sketch_attention(sketch_feature)
+        positive_feature = self.attention(positive_feature)
+        negative_feature = self.attention(negative_feature)
+        sketch_feature = self.sketch_attention(sketch_feature)
+        
+        positive_feature = self.linear(positive_feature)
+        negative_feature = self.linear(negative_feature)
+        sketch_feature = self.sketch_linear(sketch_feature)
         
         return sketch_feature, positive_feature, negative_feature
     
