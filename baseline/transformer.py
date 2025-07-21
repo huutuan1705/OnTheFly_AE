@@ -110,7 +110,8 @@ class Block(nn.Module):
         self.attention_norm = LayerNorm(self.hidden_size, eps=1e-6)
         self.mlp_norm = LayerNorm(self.hidden_size, eps=1e-6)
         self.mlp = Mlp()
-        self.attention = Attention()
+        # self.attention = Attention()
+        self.attention = nn.MultiheadAttention(2048, num_heads=NUM_HEADS, batch_first=True)
         
     def forward(self, x):
         residual = x
