@@ -96,11 +96,11 @@ class Embeddings(nn.Module):
         self.dropout = Dropout(DROPOUT_RATE)
         
     def forward(self, x):
-        x = x.flatten(2)
-        x = x.transpose(-1, -2)
+        bs, c, h, w = x.shape
+        x = x.reshape(bs, c, h*w).transpose(1, 2)
         
         embeddings = x + self.pos_embeddings
-        embeddings = self.dropout(embeddings)
+        # embeddings = self.dropout(embeddings)
         return embeddings
 
 class Block(nn.Module):
@@ -121,7 +121,7 @@ class Block(nn.Module):
         
         residual = x
         x = self.mlp_norm(x)
-        x = self.mlp(x)
+        # x = self.mlp(x)
         x = x + residual
         return x, weights
     
