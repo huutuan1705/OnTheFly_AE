@@ -8,7 +8,7 @@ from torch.nn import Dropout, Linear, LayerNorm, Softmax, GELU
 
 PATCH_SIZE = 1
 HIDDEN_SIZE = 64
-POS_LENGTH = 2048
+POS_DIM = 2048
 MLP_DIM = 128
 NUM_HEADS = 8
 NUM_LAYERS = 1
@@ -93,7 +93,7 @@ class Embeddings(nn.Module):
         super(Embeddings, self).__init__()
         patch_size = PATCH_SIZE
         n_patches = (8 // patch_size) * (8 // patch_size)
-        self.pos_embeddings = nn.parameter.Parameter(torch.zeros(1, n_patches, POS_LENGTH))
+        self.pos_embeddings = nn.parameter.Parameter(torch.zeros(1, n_patches, POS_DIM))
         self.dropout = Dropout(DROPOUT_RATE)
         
     def forward(self, x):
@@ -109,7 +109,7 @@ class Embeddings(nn.Module):
 class Block(nn.Module):
     def __init__(self):
         super(Block, self).__init__()
-        self.hidden_size = HIDDEN_SIZE
+        self.hidden_size = POS_DIM
         self.attention_norm = LayerNorm(self.hidden_size, eps=1e-6)
         self.mlp_norm = LayerNorm(self.hidden_size, eps=1e-6)
         self.mlp = Mlp()
