@@ -100,8 +100,8 @@ def evaluate_model(model, dataloader_test):
 def train_model(model, args):
     model = model.to(device)
     dataloader_train, dataloader_test = get_dataloader(args)
-    # if args.load_pretrained:
-    #     model.load_state_dict(torch.load(args.pretrained))
+    if args.load_pretrained:
+        model.load_state_dict(torch.load(args.pretrained_dir))
         
     # loss_fn = nn.TripletMarginLoss(margin=args.margin)
     # optimizer = optim.AdamW(params=model.parameters(), lr=args.lr)
@@ -134,18 +134,18 @@ def train_model(model, args):
         if top5_eval > top5:
             top1, top5, top10 = top1_eval, top5_eval, top10_eval
             torch.save(model.state_dict(), "best_model.pth")
-            # torch.save(
-            #     {
-            #         'sample_embedding_network': model.sample_embedding_network.state_dict(),
-            #         'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
-            #     }, args.dataset_name + '_backbone.pth')
+            torch.save(
+                {
+                    'sample_embedding_network': model.sample_embedding_network.state_dict(),
+                    'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
+                }, args.dataset_name + '_backbone.pth')
             
-            # torch.save({'attention': model.attention.state_dict(),
-            #             'sketch_attention': model.sketch_attention.state_dict(),
-            #             }, args.dataset_name + '_attention.pth')
-            # torch.save({'linear': model.linear.state_dict(),
-            #             'sketch_linear': model.sketch_linear.state_dict(),
-            #             }, args.dataset_name + '_linear.pth')
+            torch.save({'attention': model.attention.state_dict(),
+                        'sketch_attention': model.sketch_attention.state_dict(),
+                        }, args.dataset_name + '_attention.pth')
+            torch.save({'linear': model.linear.state_dict(),
+                        'sketch_linear': model.sketch_linear.state_dict(),
+                        }, args.dataset_name + '_linear.pth')
         print('Top 1 accuracy:  {:.4f}'.format(top1_eval))
         print('Top 5 accuracy:  {:.4f}'.format(top5_eval))
         print('Top 10 accuracy: {:.4f}'.format(top10_eval))

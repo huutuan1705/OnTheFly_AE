@@ -11,8 +11,10 @@ if __name__ == "__main__":
     parsers.add_argument('--output_size', type=int, default=64)
     parsers.add_argument('--num_heads', type=int, default=8)
     parsers.add_argument('--root_dir', type=str, default='/kaggle/input/fg-sbir-dataset')
+    parsers.add_argument('--pretrained_dir', type=str, default='/kaggle/input/base_ae_model/pytorch/default/1/best_model.pth')
     
     parsers.add_argument('--use_kaiming_init', type=bool, default=True)
+    parsers.add_argument('--load_pretrained', type=bool, default=False)
     
     parsers.add_argument('--batch_size', type=int, default=48)
     parsers.add_argument('--test_batch_size', type=int, default=1)
