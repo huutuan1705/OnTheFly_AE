@@ -24,7 +24,8 @@ class FGSBIR_Dataset(Dataset):
         self.train_sketch = [x for x in self.coordinate if 'train' in x]
         self.test_sketch = [x for x in self.coordinate if 'test' in x]
         
-        self.train_transform = get_transform('train')
+        self.train_transform_1 = get_transform(type='train', aug_mode='geometrci_strong')
+        self.train_transform_2 = get_transform(type='train', aug_mode='color_strong')
         self.test_transform = get_transform('test')
         
     def __len__(self):
@@ -58,13 +59,17 @@ class FGSBIR_Dataset(Dataset):
             positive_image = Image.open(positive_path).convert("RGB")
             negative_image = Image.open(negative_path).convert("RGB")
             
-            sketch_img = self.train_transform(sketch_img)
-            positive_image = self.train_transform(positive_image)
-            negative_image = self.train_transform(negative_image)
+            sketch_img_1 = self.train_transform_1(sketch_img)
+            positive_image_1 = self.train_transform_1(positive_image)
+            negative_image_1 = self.train_transform_1(negative_image)
             
-            sample = {'sketch_img': sketch_img, 'sketch_path': sketch_path,
-                      'positive_img': positive_image, 'positive_path': positive_sample,
-                      'negative_img': negative_image, 'negative_path': negative_sample
+            sketch_img_2 = self.train_transform_2(sketch_img)
+            positive_image_2 = self.train_transform_2(positive_image)
+            negative_image_2 = self.train_transform_2(negative_image)
+            
+            sample = {'sketch_img_1': sketch_img_1, 'sketch_img_2': sketch_img_2,
+                      'positive_img_1': positive_image_1, 'positive_image_2': positive_image_2,
+                      'negative_img_1': negative_image_1, 'negative_image_2': negative_image_2
                       } 
         
         elif self.mode == "test":
