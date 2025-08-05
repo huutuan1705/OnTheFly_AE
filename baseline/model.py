@@ -20,11 +20,11 @@ class Siamese_SBIR(nn.Module):
         self.sketch_attention = SelfAttention(args)
         self.sketch_linear = Linear_global(feature_num=64)
 
-            
-    def forward(self, batch):
-        sketch_img = batch['sketch_img'].to(device)
-        positive_img = batch['positive_img'].to(device)
-        negative_img = batch['negative_img'].to(device)
+    
+    def extract_feature(self, batch, num):
+        sketch_img = batch[f'sketch_img_{num}'].to(device)
+        positive_img = batch[f'positive_img_{num}'].to(device)
+        negative_img = batch[f'negative_img_{num}'].to(device)
         
         positive_feature, fm_6b_pos = self.sample_embedding_network(positive_img)
         negative_feature, _ = self.sample_embedding_network(negative_img)
@@ -44,4 +44,15 @@ class Siamese_SBIR(nn.Module):
         }
         
         return sketch_feature, positive_feature, negative_feature, fm_6bs
+    
+    def forward(self, batch):
+        sketch_feature_1, positive_feature_1, negative_feature_1, fm_6bs_1 = self.extract_feature(batch=batch, num=1)
+        sketch_feature_2, positive_feature_2, negative_feature_2, fm_6bs_2 = self.extract_feature(batch=batch, num=2)
+        
+        return {
+            'sketch_feature_1': sketch_feature_1, 'sketch_feature_2': sketch_feature_2,
+            'positive_feature_1': positive_feature_1, 'positive_feature_2': positive_feature_2,
+            'negative_feature_1': negative_feature_1, 'negative_feature_2': negative_feature_2,
+            'fm_6bs_1': fm_6bs_1, 'fm_6bs_2': fm_6bs_2
+        }
     
