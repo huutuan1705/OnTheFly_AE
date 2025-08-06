@@ -11,10 +11,29 @@ def np2th(weights, conv=False):
         weights = weights.transpose([3, 2, 0, 1])
     return torch.from_numpy(weights)
 
-def info_nce_loss(args, features):
-    labels = torch.cat([torch.arange(args.batch_size) for i in range(2)], dim=0)
-    labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
-    labels = labels.to(device)
+def info_nce_loss(args, features_view1, features_view2):
+        device = args.device
+        temperature = args.temperature
+        batch_size = features_view1.shape[0]
+
+        features_view1 = F.normalize(features_view1, dim=1)
+        features_view2 = F.normalize(features_view2, dim=1)
+
+        features = torch.cat([features_view1, features_view2], dim=0)  # [2B, D]
+
+        similarity_matrix = torch.matmul(features, features.T)  # [2B, 2B]
+
+        labels = torch.cat([torch.arange(batch_size) + batch_size, torch.arange(batch_size)], dim=0).to(device)
+
+        # Mask self-similarity
+        mask = torch.eye(2 * batch_size, dtype=torch.bool).to(device)
+        similarity_matrix = similarity_matrix.masked_fill(mask, -9e15)
+
+        logits = similarity_matrix / temperature
+
+        loss = F.cross_entropy(logits, labels)
+        return loss
+    
     
 def loss_fn(args, features):
     sketch_feature_1 = features['sketch_feature_1']
@@ -35,7 +54,11 @@ def loss_fn(args, features):
     triplet_loss_2 = triplet_2(sketch_feature_2, positive_feature_2, negative_feature_2)
     mse_loss_2 = F.mse_loss(input=fm_6bs_2["fm_6b_ske"], target=fm_6bs_2["fm_6b_pos"], reduction="none")
     
-    total_loss = triplet_loss_1 + triplet_loss_2  # + mse_loss_1 + mse_loss_2
+    infonce_sketch = info_nce_loss(args, sketch_feature_1, sketch_feature_2)
+    infonce_positive = info_nce_loss(args, positive_feature_1, positive_feature_2)
+    infonce_negative = info_nce_loss(args, negative_feature_1, negative_feature_2)
+    
+    total_loss = triplet_loss_1 + triplet_loss_2 + infonce_sketch + infonce_positive + infonce_negative  # + mse_loss_1 + mse_loss_2
     total_loss = torch.mean(total_loss)
     return total_loss
     
