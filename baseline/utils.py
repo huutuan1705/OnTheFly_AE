@@ -11,12 +11,31 @@ def np2th(weights, conv=False):
         weights = weights.transpose([3, 2, 0, 1])
     return torch.from_numpy(weights)
 
-def loss_fn(args, sketch_feature, positive_feature, negative_feature, fm_6bs):
-    triplet = nn.TripletMarginLoss(margin=args.margin)
-    triplet_loss = triplet(sketch_feature, positive_feature, negative_feature)
-    mse_loss = F.mse_loss(input=fm_6bs["fm_6b_ske"], target=fm_6bs["fm_6b_pos"], reduction="none")
+def info_nce_loss(args, features):
+    labels = torch.cat([torch.arange(args.batch_size) for i in range(2)], dim=0)
+    labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
+    labels = labels.to(device)
     
-    total_loss = triplet_loss + mse_loss
+def loss_fn(args, features):
+    sketch_feature_1 = features['sketch_feature_1']
+    positive_feature_1 = features['positive_feature_1']
+    negative_feature_1 = features['negative_feature_1']
+    fm_6bs_1 = features['fm_6bs_1']
+    
+    sketch_feature_2 = features['sketch_feature_2']
+    positive_feature_2 = features['positive_feature_2']
+    negative_feature_2 = features['negative_feature_2']
+    fm_6bs_2 = features['fm_6bs_2']
+    
+    triplet_1 = nn.TripletMarginLoss(margin=args.margin)
+    triplet_loss_1 = triplet_1(sketch_feature_1, positive_feature_1, negative_feature_1)
+    mse_loss_1 = F.mse_loss(input=fm_6bs_1["fm_6b_ske"], target=fm_6bs_1["fm_6b_pos"], reduction="none")
+    
+    triplet_2 = nn.TripletMarginLoss(margin=args.margin)
+    triplet_loss_2 = triplet_2(sketch_feature_2, positive_feature_2, negative_feature_2)
+    mse_loss_2 = F.mse_loss(input=fm_6bs_2["fm_6b_ske"], target=fm_6bs_2["fm_6b_pos"], reduction="none")
+    
+    total_loss = triplet_loss_1 + triplet_loss_2  # + mse_loss_1 + mse_loss_2
     total_loss = torch.mean(total_loss)
     return total_loss
     

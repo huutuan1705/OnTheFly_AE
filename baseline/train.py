@@ -120,8 +120,8 @@ def train_model(model, args):
             model.train()
             optimizer.zero_grad()
             
-            sketch_feature, positive_feature, negative_feature, fm_6bs = model(batch_data)
-            loss = loss_fn(args, sketch_feature, positive_feature, negative_feature, fm_6bs)
+            features = model(batch_data)
+            loss = loss_fn(args, features)
             loss.backward()
             optimizer.step()
             # scheduler.step()
