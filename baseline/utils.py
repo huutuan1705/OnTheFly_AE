@@ -15,8 +15,8 @@ def info_nce_loss(args, features_view1, features_view2):
         temperature = args.temperature
         batch_size = features_view1.shape[0]
 
-        features_view1 = F.normalize(features_view1, dim=1)
-        features_view2 = F.normalize(features_view2, dim=1)
+        # features_view1 = F.normalize(features_view1, dim=1)
+        # features_view2 = F.normalize(features_view2, dim=1)
 
         features = torch.cat([features_view1, features_view2], dim=0)  # [2B, D]
 
