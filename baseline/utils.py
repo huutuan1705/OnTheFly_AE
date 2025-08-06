@@ -12,7 +12,6 @@ def np2th(weights, conv=False):
     return torch.from_numpy(weights)
 
 def info_nce_loss(args, features_view1, features_view2):
-        device = args.device
         temperature = args.temperature
         batch_size = features_view1.shape[0]
 
