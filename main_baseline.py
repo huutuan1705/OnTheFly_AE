@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parsers.add_argument('--step_size', type=int, default=100)
     parsers.add_argument('--gamma', type=float, default=0.5)
     parsers.add_argument('--margin', type=float, default=0.3)
+    parsers.add_argument('--temperature', default=0.07, type=float, help='softmax temperature (default: 0.07)')
     parsers.add_argument('--threads', type=int, default=4)
     parsers.add_argument('--lr', type=float, default=0.0001)
     parsers.add_argument('--epochs', type=int, default=200)
