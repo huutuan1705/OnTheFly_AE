@@ -152,3 +152,6 @@ def train_model(model, args):
         print('Mean A         : {:.4f}'.format(meanA))
         print('Mean B         : {:.4f}'.format(meanB))
         print('Loss:            {:.4f}'.format(avg_loss))
+        with open("results_log.txt", "a") as f:
+            f.write("Epoch {:d} | Top1: {:.4f} | Top5: {:.4f} | Top10: {:.4f} | MeanA: {:.4f} | MeanB: {:.4f} | Loss: {:.4f}\n".format(
+                i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, avg_loss))
