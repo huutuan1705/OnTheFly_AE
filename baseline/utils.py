@@ -56,7 +56,7 @@ def loss_fn(args, features):
     infonce_sketch = info_nce_loss(args, sketch_feature_1, sketch_feature_2)
     infonce_positive = info_nce_loss(args, positive_feature_1, positive_feature_2)
     
-    total_loss = triplet_loss_1 + triplet_loss_2 # + 0.1*infonce_sketch + 0.1*infonce_positive  # + mse_loss_1 + mse_loss_2
+    total_loss = triplet_loss_1 + triplet_loss_2 + mse_loss_1 + mse_loss_2 # + 0.1*infonce_sketch + 0.1*infonce_positive  # + mse_loss_1 + mse_loss_2
     # total_loss = torch.mean(total_loss)
     return total_loss
     
