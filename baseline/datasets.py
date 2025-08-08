@@ -76,18 +76,24 @@ class FGSBIR_Dataset(Dataset):
             sketch_path = self.test_sketch[item] 
             vector_x = self.coordinate[sketch_path]
             
-            list_sketch_imgs = rasterize_sketch_steps(vector_x)
+            # list_sketch_imgs = rasterize_sketch_steps(vector_x)
             
-            sketch_raw_imgs = [Image.fromarray(sk_img).convert("RGB") for sk_img in list_sketch_imgs]
-            sketch_images = torch.stack([self.test_transform(sk_img) for sk_img in sketch_raw_imgs])
+            # sketch_raw_imgs = [Image.fromarray(sk_img).convert("RGB") for sk_img in list_sketch_imgs]
+            # sketch_images = torch.stack([self.test_transform(sk_img) for sk_img in sketch_raw_imgs])
+            
+            # positive_sample = '_'.join(self.test_sketch[item].split('/')[-1].split('_')[:-1])
+            # positive_path = os.path.join(self.root_dir, 'photo', positive_sample + '.png')
+            # positive_image = self.test_transform(Image.open(positive_path).convert("RGB"))
+            
+            # posible_list = list(range(len(self.test_sketch)))
+            # posible_list.remove(item)
+            
+            sketch_images = rasterize_sketch(vector_x)
+            sketch_images = self.test_transform(Image.fromarray(sketch_images).convert("RGB"))
             
             positive_sample = '_'.join(self.test_sketch[item].split('/')[-1].split('_')[:-1])
             positive_path = os.path.join(self.root_dir, 'photo', positive_sample + '.png')
             positive_image = self.test_transform(Image.open(positive_path).convert("RGB"))
-            
-            posible_list = list(range(len(self.test_sketch)))
-            posible_list.remove(item)
-            
             
             sample = {'sketch_imgs': sketch_images, 'sketch_path': sketch_path,
                       'positive_img': positive_image, 'positive_path': positive_sample,
