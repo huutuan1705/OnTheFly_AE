@@ -24,6 +24,7 @@ def get_dataloader(args):
     return dataloader_train, dataloader_test
 
 def evaluate_model(model, datloader_test):
+    with torch.no_grad():
         Image_Feature_ALL = []
         Image_Name = []
         Sketch_Feature_ALL = []
@@ -32,10 +33,10 @@ def evaluate_model(model, datloader_test):
         model.eval()
         for _, sanpled_batch in enumerate(tqdm(datloader_test)):
             sketch_feature = model.sketch_linear(model.sketch_attention(
-                model.sketch_embedding_network(sanpled_batch["sketch_imgs"])
+                model.sketch_embedding_network(sanpled_batch["sketch_imgs"].to(device))
             ))
             positive_feature = model.linear(model.attention(
-                model.sample_embedding_network(sanpled_batch["positive_img"])
+                model.sample_embedding_network(sanpled_batch["positive_img"].to(device))
             ))
             Sketch_Feature_ALL.extend(sketch_feature)
             Sketch_Name.extend(sanpled_batch['sketch_path'])
