@@ -32,10 +32,10 @@ def evaluate_model(model, datloader_test):
         model.eval()
         for _, sanpled_batch in enumerate(tqdm(datloader_test)):
             sketch_feature = model.sketch_linear(model.sketch_attention(
-                model.sketch_embedding_network(sanpled_batch["sketch_path"])
+                model.sketch_embedding_network(sanpled_batch["sketch_imgs"])
             ))
             positive_feature = model.linear(model.attention(
-                model.sample_embedding_network(sanpled_batch[""])
+                model.sample_embedding_network(sanpled_batch["positive_img"])
             ))
             Sketch_Feature_ALL.extend(sketch_feature)
             Sketch_Name.extend(sanpled_batch['sketch_path'])
