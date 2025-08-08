@@ -42,34 +42,3 @@ class Linear_global(nn.Module):
     def fix_weights(self):
         for x in self.parameters():
             x.requires_grad = False
-
-class AutoEncoder(nn.Module):
-    def __init__(self, input_dim=2048, compressed_dim=128):
-        super(AutoEncoder, self).__init__()
-        
-        # --- Encoder ---
-        self.encoder = nn.Sequential(
-            nn.Linear(input_dim, 1024),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.1),
-            nn.Linear(1024, 512),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.1),
-            nn.Linear(512, compressed_dim),
-        )
-        
-        # --- Decoder ---
-        self.decoder = nn.Sequential(
-            nn.Linear(compressed_dim, 512),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.1),
-            nn.Linear(512, 1024),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.1),
-            nn.Linear(1024, input_dim),      
-        )
-    
-    def forward(self, x):
-        z = self.encoder(x)       # Vector nén
-        recon = self.decoder(z)   # Vector tái tạo
-        return F.normalize(recon)
