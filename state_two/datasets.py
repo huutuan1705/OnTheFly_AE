@@ -85,10 +85,6 @@ class FGSBIR_Dataset(Dataset):
             positive_path = os.path.join(self.root_dir, 'photo', positive_sample + '.png')
             positive_image = self.test_transform(Image.open(positive_path).convert("RGB"))
             
-            # sketch_images = rasterize_sketch(vector_x)
-            # sketch_images = self.test_transform(Image.fromarray(sketch_images).convert("RGB"))
-    
-            
             sample = {'sketch_imgs': sketch_images, 'sketch_path': sketch_path,
                       'positive_img': positive_image, 'positive_path': positive_sample,
                       } 
