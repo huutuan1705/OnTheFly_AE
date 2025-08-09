@@ -24,32 +24,29 @@ class Siamese_SBIR(nn.Module):
         self.sketch_attention.fix_weights()
         self.linear.fix_weights()
         
-        def init_weights(m):
-            if type(m) == nn.Linear:
-                nn.init.kaiming_normal_(m.weight)
-        
-        if self.args.use_kaiming_init:
-            self.sketch_linear.apply(init_weights)
-        
     def extract_feature(self, batch, num):
-        sketch_img = batch[f'sketch_imgs_{num}'].to(device)
+        sketch_imgs = batch[f'sketch_imgs_{num}'].to(device)
         positive_img = batch[f'positive_img_{num}'].to(device)
         negative_img = batch[f'negative_img_{num}'].to(device)
         
         positive_feature, _ = self.sample_embedding_network(positive_img)
         negative_feature, _ = self.sample_embedding_network(negative_img)
-        sketch_feature, _ = self.sketch_embedding_network(sketch_img)
         
         positive_feature = self.attention(positive_feature)
         negative_feature = self.attention(negative_feature)
-        sketch_feature = self.sketch_attention(sketch_feature)
         
         positive_feature = self.linear(positive_feature)
         negative_feature = self.linear(negative_feature)
-        sketch_feature = self.sketch_linear(sketch_feature)
         
-
-        return sketch_feature, positive_feature, negative_feature
+        sketch_features = []
+        
+        for sketch_img in sketch_imgs:
+            sketch_feature, _ = self.sketch_embedding_network(sketch_img)
+            sketch_feature = self.sketch_attention(sketch_feature)
+            sketch_feature = self.sketch_linear(sketch_feature)
+            sketch_features.append(sketch_feature)
+        return sketch_features, positive_feature, negative_feature
+    
     
     def forward(self, batch):
         sketch_feature_1, positive_feature_1, negative_feature_1 = self.extract_feature(batch=batch, num=1)
