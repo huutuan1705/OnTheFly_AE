@@ -22,60 +22,6 @@ def get_dataloader(args):
         dataset_test, batch_size=args.test_batch_size, shuffle=False, num_workers=int(args.threads))
 
     return dataloader_train, dataloader_test
-
-# def evaluate_model(model, datloader_test):
-#     with torch.no_grad():
-#         Image_Feature_ALL = []
-#         Image_Name = []
-#         Sketch_Feature_ALL = []
-#         Sketch_Name = []
-        
-#         model.eval()
-#         for _, sanpled_batch in enumerate(tqdm(datloader_test)):
-#             sketch_feature, _ = model.sketch_embedding_network(sanpled_batch["sketch_imgs"].to(device))
-#             sketch_feature = model.sketch_linear(model.sketch_attention(sketch_feature))
-            
-#             positive_feature, _ = model.sample_embedding_network(sanpled_batch["positive_img"].to(device))
-#             positive_feature = model.linear(model.attention(positive_feature))
-            
-#             Sketch_Feature_ALL.extend(sketch_feature)
-#             Sketch_Name.extend(sanpled_batch['sketch_path'])
-
-#             for i_num, positive_name in enumerate(sanpled_batch['positive_path']):
-#                 if positive_name not in Image_Name:
-#                     Image_Name.append(sanpled_batch['positive_path'][i_num])
-#                     Image_Feature_ALL.append(positive_feature[i_num])
-
-#         rank = torch.zeros(len(Sketch_Name))
-#         rank_percentile = torch.zeros(len(Sketch_Name))
-#         Image_Feature_ALL = torch.stack(Image_Feature_ALL)
-        
-#         avererage_area = []
-#         avererage_area_percentile = []
-
-#         for num, sketch_feature in enumerate(Sketch_Feature_ALL):
-#             s_name = Sketch_Name[num]
-#             sketch_query_name = '_'.join(s_name.split('/')[-1].split('_')[:-1])
-#             position_query = Image_Name.index(sketch_query_name)
-
-#             distance = F.pairwise_distance(sketch_feature.unsqueeze(0), Image_Feature_ALL)
-#             target_distance = F.pairwise_distance(sketch_feature.unsqueeze(0),
-#                                                   Image_Feature_ALL[position_query].unsqueeze(0))
-
-#             rank[num] = distance.le(target_distance).sum()
-#             rank_percentile[num] = (len(distance) - rank[num]) / (len(distance) - 1)
-            
-#             avererage_area.append(1/rank[num].item() if rank[num].item()!=0 else 1)
-#             avererage_area_percentile.append(rank_percentile[num].item() if rank_percentile[num].item!=0 else 1)
-
-#         top1 = rank.le(1).sum().numpy() / rank.shape[0]
-#         top5 = rank.le(5).sum().numpy() / rank.shape[0]
-#         top10 = rank.le(10).sum().numpy() / rank.shape[0]
-
-#         meanA = np.mean(avererage_area_percentile)
-#         meanB = np.mean(avererage_area)
-        
-#         return top1, top5, top10, meanA, meanB
     
 def evaluate_model(model, dataloader_test):
     with torch.no_grad():

@@ -52,22 +52,22 @@ class FGSBIR_Dataset(Dataset):
             negative_path = os.path.join(self.root_dir, 'photo', negative_sample + '.png')
             
             vector_x = self.coordinate[sketch_path]
-            sketch_img = rasterize_sketch(vector_x)
-               
-            sketch_img = Image.fromarray(sketch_img).convert("RGB")
+            list_sketch_imgs = rasterize_sketch_steps(vector_x)
+            
+            sketch_raw_imgs = [Image.fromarray(sk_img).convert("RGB") for sk_img in list_sketch_imgs]
+            sketch_images_1 = torch.stack([self.train_transform_1(sk_img) for sk_img in sketch_raw_imgs])
+            sketch_images_2 = torch.stack([self.train_transform_2(sk_img) for sk_img in sketch_raw_imgs])
             
             positive_image = Image.open(positive_path).convert("RGB")
             negative_image = Image.open(negative_path).convert("RGB")
             
-            sketch_img_1 = self.train_transform_1(sketch_img)
             positive_image_1 = self.train_transform_1(positive_image)
             negative_image_1 = self.train_transform_1(negative_image)
             
-            sketch_img_2 = self.train_transform_2(sketch_img)
             positive_image_2 = self.train_transform_2(positive_image)
             negative_image_2 = self.train_transform_2(negative_image)
             
-            sample = {'sketch_img_1': sketch_img_1, 'sketch_img_2': sketch_img_2,
+            sample = {'sketch_imgs_1': sketch_images_1, 'sketch_imgs_2': sketch_images_2,
                       'positive_img_1': positive_image_1, 'positive_img_2': positive_image_2,
                       'negative_img_1': negative_image_1, 'negative_img_2': negative_image_2
                       } 
