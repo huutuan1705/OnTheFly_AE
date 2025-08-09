@@ -18,7 +18,17 @@ class Siamese_SBIR(nn.Module):
         self.sketch_attention = SelfAttention(args)
         self.sketch_linear = Linear_global(feature_num=64)
 
-    
+        def init_weights(m):
+            if type(m) == nn.Linear:
+                nn.init.kaiming_normal_(m.weight)
+        
+        if self.args.use_kaiming_init:
+            self.attention.apply(init_weights)
+            self.linear.apply(init_weights)
+            
+            self.sketch_attention.apply(init_weights)
+            self.sketch_linear.apply(init_weights)
+            
     def extract_feature(self, batch, num):
         sketch_img = batch[f'sketch_img_{num}'].to(device)
         positive_img = batch[f'positive_img_{num}'].to(device)

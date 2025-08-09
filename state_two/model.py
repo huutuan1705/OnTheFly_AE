@@ -10,13 +10,26 @@ class Siamese_SBIR(nn.Module):
     def __init__(self, args):
         super(Siamese_SBIR, self).__init__()
         self.args = args
-        self.sample_embedding_network = InceptionV3(args=args).fix_weights()
-        self.attention = SelfAttention(args).fix_weights()
-        self.linear = Linear_global(feature_num=64).fix_weights()
+        self.sample_embedding_network = InceptionV3(args=args)
+        self.attention = SelfAttention(args)
+        self.linear = Linear_global(feature_num=64)
         
-        self.sketch_embedding_network = InceptionV3(args=args).fix_weights()
-        self.sketch_attention = SelfAttention(args).fix_weights()
+        self.sketch_embedding_network = InceptionV3(args=args)
+        self.sketch_attention = SelfAttention(args)
         self.sketch_linear = Linear_global(feature_num=64)
+        
+        self.sample_embedding_network.fix_weights()
+        self.sketch_embedding_network.fix_weights()
+        self.attention.fix_weights()
+        self.sketch_attention.fix_weights()
+        self.linear.fix_weights()
+        
+        def init_weights(m):
+            if type(m) == nn.Linear:
+                nn.init.kaiming_normal_(m.weight)
+        
+        if self.args.use_kaiming_init:
+            self.sketch_linear.apply(init_weights)
         
     def extract_feature(self, batch, num):
         sketch_img = batch[f'sketch_imgs_{num}'].to(device)
