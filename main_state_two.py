@@ -5,6 +5,19 @@ from state_two.train import train_model
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+def load_backbone(args, model):
+    backbones_state = torch.load(args.backbone_dir + "/" + args.dataset_name + "_" + args.top + "_backbone.pth", weights_only=True)
+    attention_state = torch.load(args.backbone_dir + "/" + args.dataset_name + "_" + args.top + "_attention.pth", weights_only=True)
+    linear_state = torch.load(args.backbone_dir + "/" + args.dataset_name + "_" + args.top + "_linear.pth", weights_only=True)
+    
+    model.sample_embedding_network.load_state_dict(backbones_state['sample_embedding_network'], strict=False)
+    model.attention.load_state_dict(attention_state['attention'], strict=False)
+    model.linear.load_state_dict(linear_state['linear'])
+    model.sketch_embedding_network.load_state_dict(backbones_state['sketch_embedding_network'], strict=False)
+    model.sketch_attention.load_state_dict(attention_state['sketch_attention'], strict=False)
+    
+    return model
+
 if __name__ == "__main__":
     parsers = argparse.ArgumentParser(description='Baseline Fine-Grained SBIR model')
     parsers.add_argument('--dataset_name', type=str, default='ShoeV2')
@@ -12,6 +25,8 @@ if __name__ == "__main__":
     parsers.add_argument('--num_heads', type=int, default=8)
     parsers.add_argument('--root_dir', type=str, default='/kaggle/input/fg-sbir-dataset')
     parsers.add_argument('--pretrained_dir', type=str, default='/kaggle/input/base_ae_model/pytorch/default/1/best_model.pth')
+    parsers.add_argument('--backbone_dir', type=str, default='')
+    parsers.add_argument('--top', type=str, default='top10')
     
     parsers.add_argument('--use_kaiming_init', type=bool, default=True)
     parsers.add_argument('--load_pretrained', type=bool, default=False)
@@ -28,4 +43,5 @@ if __name__ == "__main__":
     
     args = parsers.parse_args()
     model = Siamese_SBIR(args).to(device)
+    model = load_backbone(args=args, model=model)
     train_model(model, args)
