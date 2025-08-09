@@ -33,8 +33,9 @@ def evaluate_model(model, dataloader_test):
 
         for idx, batch in enumerate(tqdm(dataloader_test)):
             sketch_features_all = torch.FloatTensor().to(device)
+            # print(batch['sketch_imgs'].shape) # (1, 25, 3, 299, 299)
+            
             for data_sketch in batch['sketch_imgs']:
-                # print(data_sketch.shape) # (1, 25, 3, 299, 299)
                 sketch_feature, _ = model.sketch_embedding_network(
                     data_sketch.to(device))
                 sketch_feature = model.sketch_linear(
