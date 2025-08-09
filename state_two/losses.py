@@ -15,8 +15,8 @@ def loss_fn(args, features):
     
     for i_batch in range(args.batch_size):
         for i_sketch in range(len(sketch_features_1[i_batch])):
-            sub_sketch_feature_1 = sketch_features_1[i_batch][i_sketch] # shape [1, D]
-            sub_sketch_feature_2 = sketch_features_2[i_batch][i_sketch] # shape [1, D]
+            sub_sketch_feature_1 = sketch_features_1[i_batch][i_sketch].unsqueeze(1) # shape [1, D]
+            sub_sketch_feature_2 = sketch_features_2[i_batch][i_sketch].unsqueeze(1) # shape [1, D]
             
             loss_triplet_1 += criterion(sub_sketch_feature_2, positive_feature_1[i_batch], negative_feature_1[i_batch])
             loss_triplet_2 += criterion(sub_sketch_feature_1, positive_feature_2[i_batch], negative_feature_2[i_batch])
