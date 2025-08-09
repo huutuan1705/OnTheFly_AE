@@ -31,3 +31,41 @@ def train_model(model, args):
 
     optimizer = optim.Adam(params=model.sketch_linear.parameters(), lr=args.lr)
     top1, top5, top10, avg_loss = 0, 0, 0, 0
+    
+    for i_epoch in range(args.epochs):
+        print(f"Epoch: {i_epoch+1} / {args.epochs}")
+
+        losses = []
+        for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
+            model.train()
+            optimizer.zero_grad()
+
+            features = model(batch_data)
+            loss = loss_fn(args, features)
+            loss.backward()
+            optimizer.step()
+            # scheduler.step()
+
+            losses.append(loss.item())
+
+        avg_loss = sum(losses) / len(losses)
+        top1_eval, top5_eval, top10_eval, meanA, meanB = evaluate_model(
+            model, dataloader_test)
+
+        if top5_eval > top5:
+            top5 = top5_eval
+            torch.save(model.state_dict(), "best_top5_model.pth")
+
+        if top10_eval > top10:
+            top10 = top10_eval
+            torch.save(model.state_dict(), "best_top10_model.pth")
+
+        print('Top 1 accuracy:  {:.4f}'.format(top1_eval))
+        print('Top 5 accuracy:  {:.4f}'.format(top5_eval))
+        print('Top 10 accuracy: {:.4f}'.format(top10_eval))
+        print('Mean A         : {:.4f}'.format(meanA))
+        print('Mean B         : {:.4f}'.format(meanB))
+        print('Loss:            {:.4f}'.format(avg_loss))
+        with open("results_log.txt", "a") as f:
+            f.write("Epoch {:d} | Top1: {:.4f} | Top5: {:.4f} | Top10: {:.4f} | MeanA: {:.4f} | MeanB: {:.4f} | Loss: {:.4f}\n".format(
+                i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, avg_loss))
