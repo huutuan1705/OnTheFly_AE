@@ -152,7 +152,8 @@ def train_model(model, args):
             model, dataloader_test)
 
         if top5_eval > top5_best and top10_eval > top10_best:
-            top5 = top5_eval
+            top5_best = top5_eval
+            top10_best = top10_eval
             torch.save(model.state_dict(), "best_model.pth")
             torch.save(
                 {
