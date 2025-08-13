@@ -130,7 +130,7 @@ def train_model(model, args):
     ])
     # scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
 
-    top1, top5, top10, avg_loss = 0, 0, 0, 0
+    top5, top10, top5_best, top10_best, avg_loss = 0, 0, 0, 0, 0
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
 
@@ -151,6 +151,23 @@ def train_model(model, args):
         top1_eval, top5_eval, top10_eval, meanA, meanB = evaluate_model(
             model, dataloader_test)
 
+        if top5_eval > top5_best and top10_eval > top10_best:
+            top5 = top5_eval
+            torch.save(model.state_dict(), "best_model.pth")
+            torch.save(
+                {
+                    'sample_embedding_network': model.sample_embedding_network.state_dict(),
+                    'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
+                }, args.dataset_name + '_backbone.pth')
+
+            torch.save({'attention': model.attention.state_dict(),
+                        'sketch_attention': model.sketch_attention.state_dict(),
+                        }, args.dataset_name + '_attention.pth')
+            torch.save({'linear': model.linear.state_dict(),
+                        'sketch_linear': model.sketch_linear.state_dict(),
+                        }, args.dataset_name + '_linear.pth')
+            
+            
         if top5_eval > top5:
             top5 = top5_eval
             torch.save(model.state_dict(), "best_top5_model.pth")
