@@ -200,7 +200,8 @@ def train_model(model, args):
             torch.save({'linear': model.linear.state_dict(),
                         'sketch_linear': model.sketch_linear.state_dict(),
                         }, args.dataset_name + '_top10_linear.pth')
-
+            
+        torch.save(model.state_dict(), "last_model.pth")
         print('Top 1 accuracy:  {:.4f}'.format(top1_eval))
         print('Top 5 accuracy:  {:.4f}'.format(top5_eval))
         print('Top 10 accuracy: {:.4f}'.format(top10_eval))
