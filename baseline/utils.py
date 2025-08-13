@@ -73,12 +73,11 @@ def get_transform(type, aug_mode='geometric_strong'):
         if aug_mode == 'geometric_strong':
             # Strong geometric augmentation, weak color augmentation
             transform_list = [
-                transforms.RandomResizedCrop(299, scale=(0.6, 1.0)),  # Stronger crop
-                transforms.RandomHorizontalFlip(0.7),  # Higher flip probability
-                transforms.RandomRotation(50),  # Stronger rotation
+                transforms.RandomResizedCrop(299, scale=(0.7, 1.0)),  # Stronger crop
+                transforms.RandomHorizontalFlip(0.5),  # Higher flip probability
+                transforms.RandomRotation(25),  # Stronger rotation
                 transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=10),  # Add affine
                 transforms.ColorJitter(brightness=0.05, contrast=0.05, saturation=0.05),  # Weak color
-                transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),  # Add blur
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
@@ -87,13 +86,13 @@ def get_transform(type, aug_mode='geometric_strong'):
             # Strong color augmentation, weak geometric augmentation
             transform_list = [
                 transforms.RandomResizedCrop(299, scale=(0.9, 1.0)),  # Weaker crop
-                transforms.RandomHorizontalFlip(0.5),  # Lower flip probability
+                transforms.RandomHorizontalFlip(0.2),  # Lower flip probability
                 transforms.RandomRotation(5),  # Weaker rotation
                 transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.1),  # Strong color
                 transforms.RandomGrayscale(p=0.7),  # Add grayscale
                 transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),  # Add blur
                 transforms.ToTensor(),
-                transforms.RandomErasing(p=0.7, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0),
+                transforms.RandomErasing(p=0.5, scale=(0.02, 0.2), ratio=(0.3, 3.3), value=0),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
             
