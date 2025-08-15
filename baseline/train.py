@@ -120,7 +120,7 @@ def train_model(model, args):
     model = model.to(device)
     dataloader_train, dataloader_test = get_dataloader(args)
     if args.load_pretrained:
-        model.load_state_dict(torch.load(args.pretrained_dir))
+        model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
 
     # loss_fn = nn.TripletMarginLoss(margin=args.margin)
     # optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
