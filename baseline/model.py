@@ -23,10 +23,7 @@ class Siamese_SBIR(nn.Module):
                 nn.init.kaiming_normal_(m.weight)
         
         if self.args.use_kaiming_init:
-            self.attention.apply(init_weights)
             self.linear.apply(init_weights)
-            
-            self.sketch_attention.apply(init_weights)
             self.sketch_linear.apply(init_weights)
             
     def extract_feature(self, batch, num):
