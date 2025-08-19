@@ -19,6 +19,7 @@ if __name__ == "__main__":
     
     parsers.add_argument('--batch_size', type=int, default=1)
     parsers.add_argument('--test_batch_size', type=int, default=1)
+    parsers.add_argument('--backward_iterator', type=int, default=64)
     parsers.add_argument('--step_size', type=int, default=100)
     parsers.add_argument('--gamma', type=float, default=0.5)
     parsers.add_argument('--margin', type=float, default=0.3)
