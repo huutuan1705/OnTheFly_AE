@@ -58,8 +58,8 @@ class FGSBIR_Dataset(Dataset):
             sketch_images_1 = [self.train_transform_1(sk_img) for sk_img in sketch_raw_imgs]
             sketch_images_2 = [self.train_transform_2(sk_img) for sk_img in sketch_raw_imgs]
             
-            sketch_images_1 = torch.cat(sketch_images_1)
-            sketch_images_2 = torch.cat(sketch_images_2)
+            sketch_images_1 = torch.stack(sketch_images_1)
+            sketch_images_2 = torch.stack(sketch_images_2)
             
             positive_image = Image.open(positive_path).convert("RGB")
             negative_image = Image.open(negative_path).convert("RGB")
@@ -79,7 +79,7 @@ class FGSBIR_Dataset(Dataset):
             
             sketch_raw_imgs = [Image.fromarray(sk_img).convert("RGB") for sk_img in list_sketch_imgs]
             sketch_images = [self.test_transform(sk_img) for sk_img in sketch_raw_imgs]
-            sketch_images = torch.cat(sketch_images)
+            sketch_images = torch.stack(sketch_images)
             
             positive_sample = '_'.join(self.test_sketch[item].split('/')[-1].split('_')[:-1])
             positive_path = os.path.join(self.root_dir, 'photo', positive_sample + '.png')
