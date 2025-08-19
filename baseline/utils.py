@@ -92,7 +92,7 @@ def get_transform(type, aug_mode='geometric_strong'):
                 transforms.RandomGrayscale(p=0.7),  # Add grayscale
                 transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),  # Add blur
                 transforms.ToTensor(),
-                # transforms.RandomErasing(p=0.7, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0),
+                transforms.RandomErasing(p=0.7, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
             
