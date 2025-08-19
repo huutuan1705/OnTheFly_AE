@@ -49,6 +49,6 @@ class Siamese_SBIR(nn.Module):
         sketch_features_2 = self.sketch_linear(self.sketch_attention(sketch_features_2))
         
         return {
-            "positive_feature": positive_feature, "positive_feature": positive_feature,
+            "positive_feature": positive_feature, "negative_feature": negative_feature,
             "sketch_features_1": sketch_features_1, "sketch_features_2": sketch_features_2
         }
