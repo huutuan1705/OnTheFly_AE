@@ -136,7 +136,7 @@ def train_model(model, args):
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
         
-        for i, batch_data in enumerate(dataloader_train, dynamic_ncols=False):
+        for i, batch_data in enumerate(dataloader_train):
             model.train()
             
             loss_step, loss_triplet_1, loss_triplet_2, loss_info_nce = 0, 0, 0, 0
