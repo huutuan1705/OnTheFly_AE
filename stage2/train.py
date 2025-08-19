@@ -1,13 +1,14 @@
 import numpy as np
-import math
 import torch
+import torch.nn as nn
 import torch.utils.data as data
 import torch.nn.functional as F
 
 from tqdm import tqdm
 from torch import optim
+import torch.nn.utils as utils
 from stage2.datasets import FGSBIR_Dataset
-from baseline.utils import loss_fn
+from stage2.utils import info_nce_loss
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -128,9 +129,58 @@ def train_model(model, args):
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
         
     optimizer = optim.Adam(params=model.sketch_linear.parameters(), lr=args.lr)
+    criterion = nn.TripletMarginLoss(margin=args.margin)
     top5, top10, top5_best, top10_best, avg_loss = 0, 0, 0, 0, 0
+    loss_buffer = []
     
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
         
-        losses = []
+        for i, batch_data in enumerate(dataloader_train, dynamic_ncols=False):
+            model.train()
+            
+            loss_step, loss_triplet_1, loss_triplet_2, loss_info_nce = 0, 0, 0, 0
+            
+            features = model(batch_data)
+            sketch_features_1 = features['sketch_features_1']
+            sketch_features_2 = features['sketch_features_2']
+            positive_feature = features['positive_feature']
+            negative_feature = features['negative_feature']
+            
+            for i_sketch in range(len(sketch_features_1)):
+                loss_triplet_1 += criterion(sketch_features_1[i_sketch], positive_feature, negative_feature)
+                loss_triplet_2 += criterion(sketch_features_2[i_sketch], positive_feature, negative_feature)
+                loss_info_nce += criterion(args, sketch_features_1[i_sketch], sketch_features_2[i_sketch])
+            
+            loss_step += loss_triplet_1 + loss_triplet_2 + loss_info_nce
+            loss_buffer.append(loss_step)
+            
+            if (i + 1) % 20 == 0 or i == len(dataloader_train)-1: # Update after every 20 images or end training dataset
+                optimizer.zero_grad()
+                policy_loss = torch.stack(loss_buffer).mean()
+                policy_loss.backward()
+                
+                utils.clip_grad_norm_(model.parameters(), 40)
+                optimizer.step()
+                loss_buffer = []
+                
+        top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(model=model, dataloader_test=dataloader_test)
+        if top5_eval > top5:
+            top5 = top5_eval
+            torch.save(model.state_dict(), "best_top5_model.pth")
+        if top10_eval > top10:
+            top10 = top10_eval
+            torch.save(model.state_dict(), "best_top10_model.pth")
+            
+        torch.save(model.state_dict(), "last_model.pth")
+        print('Top 1 accuracy:  {:.5f}'.format(top1_eval))
+        print('Top 5 accuracy:  {:.5f}'.format(top5_eval))
+        print('Top 10 accuracy: {:.5f}'.format(top10_eval))
+        print('Mean A         : {:.5f}'.format(meanA))
+        print('Mean B         : {:.5f}'.format(meanB))
+        print('meanOurA:      : {:.5f}'.format(meanOurA))
+        print('meanOurB:      : {:.5f}'.format(meanOurB))
+        with open("results_log.txt", "a") as f:
+            f.write("Epoch {:d} | Top1: {:.5f} | Top5: {:.5f} | Top10: {:.5f} | MeanA: {:.5f} | MeanB: {:.5f} | meanOurA: {:.5f} | meanOurB: {:.5f} \n".format(
+                i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB))
+            

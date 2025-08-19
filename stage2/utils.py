@@ -32,6 +32,7 @@ def loss_fn(args, features):
     
     criterion = nn.TripletMarginLoss(margin=args.margin)
     total_loss = 0
+    triplet_loss_1, triplet_loss_2, info_nce = 0, 0, 0
     for i_sketch in range(len(sketch_features_1)):
         triplet_loss_1 = criterion(sketch_features_1[i_sketch], positive_feature, negative_feature)
         triplet_loss_2 = criterion(sketch_features_2[i_sketch], positive_feature, negative_feature)
