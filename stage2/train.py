@@ -148,8 +148,8 @@ def train_model(model, args):
             negative_feature = features['negative_feature']
             
             for i_sketch in range(len(sketch_features_1)):
-                loss_triplet_1 += criterion(sketch_features_1[i_sketch], positive_feature, negative_feature)
-                loss_triplet_2 += criterion(sketch_features_2[i_sketch], positive_feature, negative_feature)
+                loss_triplet_1 += criterion(sketch_features_1[i_sketch].unsqueeze(0), positive_feature, negative_feature)
+                loss_triplet_2 += criterion(sketch_features_2[i_sketch].unsqueeze(0), positive_feature, negative_feature)
                 loss_info_nce += criterion(args, sketch_features_1[i_sketch], sketch_features_2[i_sketch])
             
             loss_step += loss_triplet_1 + loss_triplet_2 + loss_info_nce
