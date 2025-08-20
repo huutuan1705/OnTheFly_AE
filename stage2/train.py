@@ -156,7 +156,8 @@ def train_model(model, args):
                 loss_triplet_1 += criterion(sketch_features_1[i_sketch].unsqueeze(0), positive_feature, negative_feature)
                 loss_triplet_2 += criterion(sketch_features_2[i_sketch].unsqueeze(0), positive_feature, negative_feature)
                 # loss_info_nce += info_nce_loss(args, sketch_features_1[i_sketch], sketch_features_2[i_sketch])
-                loss_info_nce += F.mse_loss(sketch_features_1[i_sketch], sketch_features_2[i_sketch])
+                loss_info_nce += F.mse_loss(sketch_features_1[i_sketch], positive_feature)
+                loss_info_nce += F.mse_loss(sketch_features_2[i_sketch], positive_feature)
             
             loss_step += loss_triplet_1 + loss_triplet_2 + 0.2*loss_info_nce
             loss_buffer.append(loss_step)
