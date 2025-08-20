@@ -22,7 +22,7 @@ class Siamese_SBIR(nn.Module):
         self.sample_embedding_network.fix_weights()
         self.sketch_embedding_network.fix_weights()
         self.attention.fix_weights()
-        # self.sketch_attention.fix_weights()
+        self.sketch_attention.fix_weights()
         self.linear.fix_weights()
 
         def init_weights(m):

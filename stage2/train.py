@@ -128,13 +128,12 @@ def train_model(model, args):
     if args.load_pretrained:
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
         
-    # optimizer = optim.Adam(params=model.sketch_linear.parameters(), lr=args.lr)
-    optimizer = optim.Adam([
-        # {'params': model.sketch_embedding_network.parameters(), 'lr': args.lr},
-        {'params': model.sketch_attention.parameters(), 'lr': args.lr},
-        {'params': model.sketch_linear.parameters(), 'lr': args.lr},
-    ])
-    
+    optimizer = optim.Adam(params=model.sketch_linear.parameters(), lr=args.lr)
+    # optimizer = optim.Adam([
+    #     {'params': model.sketch_embedding_network.parameters(), 'lr': args.lr},
+    #     {'params': model.sketch_attention.parameters(), 'lr': args.lr},
+    #     {'params': model.sketch_attention.parameters(), 'lr': args.lr},
+    # ])
     criterion = nn.TripletMarginLoss(margin=args.margin)
     top5, top10, top5_best, top10_best, avg_loss = 0, 0, 0, 0, 0
     loss_buffer = []
