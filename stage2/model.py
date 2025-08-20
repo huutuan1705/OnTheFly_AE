@@ -20,7 +20,7 @@ class Siamese_SBIR(nn.Module):
         self.sketch_linear = Linear_global(feature_num=64)
 
         self.sample_embedding_network.fix_weights()
-        # self.sketch_embedding_network.fix_weights()
+        self.sketch_embedding_network.fix_weights()
         self.attention.fix_weights()
         # self.sketch_attention.fix_weights()
         self.linear.fix_weights()

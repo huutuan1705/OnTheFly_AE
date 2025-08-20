@@ -130,7 +130,7 @@ def train_model(model, args):
         
     # optimizer = optim.Adam(params=model.sketch_linear.parameters(), lr=args.lr)
     optimizer = optim.Adam([
-        {'params': model.sketch_embedding_network.parameters(), 'lr': args.lr},
+        # {'params': model.sketch_embedding_network.parameters(), 'lr': args.lr},
         {'params': model.sketch_attention.parameters(), 'lr': args.lr},
         {'params': model.sketch_linear.parameters(), 'lr': args.lr},
     ])
