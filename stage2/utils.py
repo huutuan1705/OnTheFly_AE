@@ -24,21 +24,6 @@ def info_nce_loss(args, features_view1, features_view2):
         loss = F.cross_entropy(logits, labels)
         return loss
     
-def loss_fn(args, features):
-    sketch_features_1 = features['sketch_features_1']
-    sketch_features_2 = features['sketch_features_2']
-    positive_feature = features['positive_feature']
-    negative_feature = features['negative_feature']
-    
-    criterion = nn.TripletMarginLoss(margin=args.margin)
-    total_loss = 0
-    triplet_loss_1, triplet_loss_2, info_nce = 0, 0, 0
-    for i_sketch in range(len(sketch_features_1)):
-        triplet_loss_1 = criterion(sketch_features_1[i_sketch], positive_feature, negative_feature)
-        triplet_loss_2 = criterion(sketch_features_2[i_sketch], positive_feature, negative_feature)
-        info_nce = info_nce_loss(args, sketch_features_1[i_sketch], sketch_features_2[i_sketch])
-        
-    return
 
 def get_transform(type, aug_mode='geometric_strong'):
     """

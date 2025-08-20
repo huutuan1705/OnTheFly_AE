@@ -150,9 +150,10 @@ def train_model(model, args):
             for i_sketch in range(len(sketch_features_1)):
                 loss_triplet_1 += criterion(sketch_features_1[i_sketch].unsqueeze(0), positive_feature, negative_feature)
                 loss_triplet_2 += criterion(sketch_features_2[i_sketch].unsqueeze(0), positive_feature, negative_feature)
-                loss_info_nce += info_nce_loss(args, sketch_features_1[i_sketch], sketch_features_2[i_sketch])
+                # loss_info_nce += info_nce_loss(args, sketch_features_1[i_sketch], sketch_features_2[i_sketch])
+                loss_info_nce += F.mse_loss(sketch_features_1[i_sketch], sketch_features_2[i_sketch])
             
-            loss_step += loss_triplet_1 + loss_triplet_2 + loss_info_nce
+            loss_step += loss_triplet_1 + loss_triplet_2 + 0.4*loss_info_nce
             loss_buffer.append(loss_step)
             
             if (i + 1) % args.backward_iterator == 0 or i == len(dataloader_train)-1: # Update after every 20 images or finish training dataset
