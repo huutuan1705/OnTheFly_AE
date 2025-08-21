@@ -124,7 +124,7 @@ def train_model(model, args):
 
     # loss_fn = nn.TripletMarginLoss(margin=args.margin)
     # optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
-    optimizer = optim.Adam([
+    optimizer = optim.AdamW([
         {'params': model.sample_embedding_network.parameters(), 'lr': args.lr},
         {'params': model.sketch_embedding_network.parameters(), 'lr': args.lr},
     ])
