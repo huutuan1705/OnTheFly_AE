@@ -85,24 +85,26 @@ def get_transform(type, aug_mode='geometric_strong'):
         elif aug_mode == 'color_strong':
             # Strong color augmentation, weak geometric augmentation
             transform_list = [
-                transforms.RandomResizedCrop(299, scale=(0.9, 1.0)),  # Weaker crop
+                transforms.RandomResizedCrop(299, scale=(0.6, 1.0), ratio=(0.75, 1.33)),  # Weaker crop
                 transforms.RandomHorizontalFlip(0.5),  # Lower flip probability
-                transforms.RandomRotation(5),  # Weaker rotation
+                transforms.RandomRotation(degrees=15, fill=255),  # Weaker rotation
                 transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.1),  # Strong color
-                transforms.RandomGrayscale(p=0.7),  # Add grayscale
-                transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),  # Add blur
+                # transforms.RandomGrayscale(p=0.7),  # Add grayscale
+                # transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),  # Add blur
                 transforms.ToTensor(),
-                transforms.RandomErasing(p=0.7, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0),
+                # transforms.RandomErasing(p=0.7, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
             
         else:  # default mode
             # Balanced augmentation (original)
             transform_list = [
-                transforms.RandomResizedCrop(299, scale=(0.85, 1.0)),
+                transforms.Resize(299),
                 transforms.RandomHorizontalFlip(0.5),
-                transforms.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.15),
-                transforms.RandomRotation(15),
+                transforms.ColorJitter(brightness=0.2, contrast=0.3, saturation=0.4, hue=0.1),
+                transforms.RandomGrayscale(p=0.2),
+                # transforms.RandomRotation(15),
+                transforms.RandomApply([transforms.GaussianBlur(kernel_size=23, sigma=(0.1, 2.0))], p=0.3),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
