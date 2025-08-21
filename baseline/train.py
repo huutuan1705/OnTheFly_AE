@@ -123,11 +123,11 @@ def train_model(model, args):
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
 
     # loss_fn = nn.TripletMarginLoss(margin=args.margin)
-    optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
-    # optimizer = optim.Adam([
-    #     {'params': model.sample_embedding_network.parameters(), 'lr': args.lr},
-    #     {'params': model.sketch_embedding_network.parameters(), 'lr': args.lr},
-    # ])
+    # optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
+    optimizer = optim.Adam([
+        {'params': model.sample_embedding_network.parameters(), 'lr': args.lr},
+        {'params': model.sketch_embedding_network.parameters(), 'lr': args.lr},
+    ])
     # scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
 
     top5, top10, top5_best, top10_best, avg_loss = 0, 0, 0, 0, 0
