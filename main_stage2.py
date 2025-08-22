@@ -41,6 +41,6 @@ if __name__ == "__main__":
     model.attention.load_state_dict(attention_state['attention'], strict=False)
     model.sketch_attention.load_state_dict(attention_state['sketch_attention'], strict=False)
     model.linear.load_state_dict(linear_state['linear'], strict=False)
-    model.sketch_linear.load_state_dict(linear_state['sketch_linear'], strict=False)
+    # model.sketch_linear.load_state_dict(linear_state['sketch_linear'], strict=False)
         
     train_model(model, args)
