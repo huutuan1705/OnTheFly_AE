@@ -11,24 +11,30 @@ def np2th(weights, conv=False):
         weights = weights.transpose([3, 2, 0, 1])
     return torch.from_numpy(weights)
 
-def info_nce_loss(args, features_view1, features_view2):
-        temperature = args.temperature
-        batch_size = features_view1.shape[0]
+def info_nce_loss(args, features_view1: torch.Tensor, features_view2: torch.Tensor):
+    """
+    InfoNCE (NT-Xent) for SimCLR
+    features_view1, features_view2: (B, D)
+    """
+    temperature = float(args.temperature)
+    B, D = features_view1.shape
+    device = features_view1.device
 
-        features = torch.cat([features_view1, features_view2], dim=0)  # [2B, D]
+    z = torch.cat([features_view1, features_view2], dim=0)
 
-        similarity_matrix = torch.matmul(features, features.T)  # [2B, 2B]
+    logits = z @ z.t()                              # (2B, 2B)
+    mask = torch.eye(2 * B, dtype=torch.bool, device=device)
+    logits = logits.masked_fill(mask, float('-inf'))
 
-        labels = torch.cat([torch.arange(batch_size) + batch_size, torch.arange(batch_size)], dim=0).to(device)
+    logits = logits / temperature
 
-        # Mask self-similarity
-        mask = torch.eye(2 * batch_size, dtype=torch.bool).to(device)
-        similarity_matrix = similarity_matrix.masked_fill(mask, -9e15)
+    labels = torch.cat([
+        torch.arange(B, 2*B, device=device),
+        torch.arange(0, B, device=device)
+    ], dim=0).long()
 
-        logits = similarity_matrix / temperature
-
-        loss = F.cross_entropy(logits, labels)
-        return loss
+    loss = F.cross_entropy(logits, labels)
+    return loss
     
     
 def loss_fn(args, features):
@@ -42,17 +48,21 @@ def loss_fn(args, features):
     negative_feature_2 = features['negative_feature_2']
     fm_6bs_2 = features['fm_6bs_2']
     
-    criterion = nn.TripletMarginLoss(margin=args.margin)
-    triplet_loss_1 = criterion(sketch_feature_2, positive_feature_1, negative_feature_1)
-    mse_loss_1 = F.mse_loss(input=fm_6bs_1["fm_6b_ske"], target=fm_6bs_2["fm_6b_pos"], reduction="none")
+    # criterion = nn.TripletMarginLoss(margin=args.margin)
+    # triplet_loss_1 = criterion(sketch_feature_2, positive_feature_1, negative_feature_1)
+    # mse_loss_1 = F.mse_loss(input=fm_6bs_1["fm_6b_ske"], target=fm_6bs_2["fm_6b_pos"], reduction="none")
     
-    triplet_loss_2 = criterion(sketch_feature_1, positive_feature_2, negative_feature_2)
-    mse_loss_2 = F.mse_loss(input=fm_6bs_2["fm_6b_ske"], target=fm_6bs_1["fm_6b_pos"], reduction="none")
+    # triplet_loss_2 = criterion(sketch_feature_1, positive_feature_2, negative_feature_2)
+    # mse_loss_2 = F.mse_loss(input=fm_6bs_2["fm_6b_ske"], target=fm_6bs_1["fm_6b_pos"], reduction="none")
     
     infonce_sketch = info_nce_loss(args, sketch_feature_1, sketch_feature_2)
     infonce_positive = info_nce_loss(args, positive_feature_1, positive_feature_2)
     
-    total_loss = triplet_loss_1 + triplet_loss_2 + args.alpha*mse_loss_1 + args.alpha*mse_loss_2 # + 0.1*infonce_positive + 0.1*infonce_sketch
+    sum_sketch_features = torch.cat([z for z in [sketch_feature_1, sketch_feature_2]], dim=0)
+    sum_positive_features = torch.cat([z for z in [positive_feature_1, positive_feature_2]], dim=0)
+    infonce_cross = info_nce_loss(args=args, features_view1=sum_sketch_features, features_view2=sum_positive_features)
+    
+    total_loss =  infonce_positive + infonce_sketch + infonce_cross
     total_loss = torch.mean(total_loss)
     return total_loss
     
