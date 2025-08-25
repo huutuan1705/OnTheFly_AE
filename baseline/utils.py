@@ -68,7 +68,7 @@ def loss_fn(args, features):
     triplet_loss = criterion(sum_sketch_features, sum_positive_features, negative_feature)
     
     # total_loss =  infonce_positive + infonce_sketch + infonce_cross
-    total_loss = infonce_positive + infonce_sketch + infonce_cross
+    total_loss = infonce_positive + infonce_sketch + 0.5*infonce_cross
     # total_loss = torch.mean(total_loss)
     return total_loss
     
