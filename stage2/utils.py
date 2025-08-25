@@ -5,26 +5,67 @@ import torchvision.transforms as transforms
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def info_nce_loss(args, features_view1, features_view2):
-        temperature = args.temperature
-        batch_size = features_view1.shape[0]
+def np2th(weights, conv=False):
+    "Convert HWIO to OIHW"
+    if conv:
+        weights = weights.transpose([3, 2, 0, 1])
+    return torch.from_numpy(weights)
 
-        features = torch.cat([features_view1, features_view2], dim=0)  # [2B, D]
+def info_nce_loss(args, features_view1: torch.Tensor, features_view2: torch.Tensor):
+    """
+    InfoNCE (NT-Xent) for SimCLR
+    features_view1, features_view2: (B, D)
+    """
+    temperature = float(args.temperature)
+    B, D = features_view1.shape
+    device = features_view1.device
 
-        similarity_matrix = torch.matmul(features, features.T)  # [2B, 2B]
+    z = torch.cat([features_view1, features_view2], dim=0)
 
-        labels = torch.cat([torch.arange(batch_size) + batch_size, torch.arange(batch_size)], dim=0).to(device)
+    logits = z @ z.t()                              # (2B, 2B)
+    mask = torch.eye(2 * B, dtype=torch.bool, device=device)
+    logits = logits.masked_fill(mask, float('-inf'))
 
-        # Mask self-similarity
-        mask = torch.eye(2 * batch_size, dtype=torch.bool).to(device)
-        similarity_matrix = similarity_matrix.masked_fill(mask, -9e15)
+    logits = logits / temperature
 
-        logits = similarity_matrix / temperature
+    labels = torch.cat([
+        torch.arange(B, 2*B, device=device),
+        torch.arange(0, B, device=device)
+    ], dim=0).long()
 
-        loss = F.cross_entropy(logits, labels)
-        return loss
+    loss = F.cross_entropy(logits, labels)
+    return loss
     
-
+    
+def loss_fn(args, features):
+    sketch_feature_1 = features['sketch_feature_1']
+    positive_feature_1 = features['positive_feature_1']
+    negative_feature_1 = features['negative_feature_1']
+    fm_6bs_1 = features['fm_6bs_1']
+    
+    sketch_feature_2 = features['sketch_feature_2']
+    positive_feature_2 = features['positive_feature_2']
+    negative_feature_2 = features['negative_feature_2']
+    fm_6bs_2 = features['fm_6bs_2']
+    
+    # criterion = nn.TripletMarginLoss(margin=args.margin)
+    # triplet_loss_1 = criterion(sketch_feature_2, positive_feature_1, negative_feature_1)
+    # mse_loss_1 = F.mse_loss(input=fm_6bs_1["fm_6b_ske"], target=fm_6bs_2["fm_6b_pos"], reduction="none")
+    
+    # triplet_loss_2 = criterion(sketch_feature_1, positive_feature_2, negative_feature_2)
+    # mse_loss_2 = F.mse_loss(input=fm_6bs_2["fm_6b_ske"], target=fm_6bs_1["fm_6b_pos"], reduction="none")
+    
+    infonce_sketch = info_nce_loss(args, sketch_feature_1, sketch_feature_2)
+    infonce_positive = info_nce_loss(args, positive_feature_1, positive_feature_2)
+    
+    sum_sketch_features = torch.cat([z for z in [sketch_feature_1, sketch_feature_2]], dim=0)
+    sum_positive_features = torch.cat([z for z in [positive_feature_1, positive_feature_2]], dim=0)
+    infonce_cross = info_nce_loss(args=args, features_view1=sum_sketch_features, features_view2=sum_positive_features)
+    
+    total_loss =  infonce_positive + infonce_sketch + infonce_cross
+    total_loss = torch.mean(total_loss)
+    return total_loss
+    
 def get_transform(type, aug_mode='geometric_strong'):
     """
     Get transform for SimCLR with alternating augmentation modes
@@ -36,7 +77,8 @@ def get_transform(type, aug_mode='geometric_strong'):
             - 'geometric_strong': strong geometric, weak color
             - 'color_strong': strong color, weak geometric
     """
-    
+    weak_color_jitter = transforms.ColorJitter(brightness=0.05, contrast=0.05, saturation=0.05)
+    strong_color_jitter = transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.1)
     if type == 'train':
         if aug_mode == 'geometric_strong':
             # Strong geometric augmentation, weak color augmentation
@@ -45,8 +87,10 @@ def get_transform(type, aug_mode='geometric_strong'):
                 transforms.RandomHorizontalFlip(0.7),  # Higher flip probability
                 transforms.RandomRotation(50),  # Stronger rotation
                 transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=10),  # Add affine
-                transforms.ColorJitter(brightness=0.05, contrast=0.05, saturation=0.05),  # Weak color
-                transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),  # Add blur
+                # transforms.ColorJitter(brightness=0.05, contrast=0.05, saturation=0.05),  # Weak color
+                transforms.RandomApply([weak_color_jitter], p=0.8),
+                transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.2),
+                # transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),  # Add blur
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
@@ -54,13 +98,16 @@ def get_transform(type, aug_mode='geometric_strong'):
         elif aug_mode == 'color_strong':
             # Strong color augmentation, weak geometric augmentation
             transform_list = [
-                transforms.RandomResizedCrop(299, scale=(0.9, 1.0)),  # Weaker crop
-                transforms.RandomHorizontalFlip(0.5),  # Lower flip probability
+                transforms.Resize(299),  # Weaker crop
+                # transforms.RandomHorizontalFlip(0.5),  # Lower flip probability
                 transforms.RandomRotation(5),  # Weaker rotation
-                transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.1),  # Strong color
-                transforms.RandomGrayscale(p=0.7),  # Add grayscale
-                transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),  # Add blur
+                # transforms.ColorJitter(),  # Strong color
+                transforms.RandomApply([strong_color_jitter], p=0.8),
+                transforms.RandomGrayscale(p=0.5),  # Add grayscale
+                # transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),  # Add blur
+                transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.8),
                 transforms.ToTensor(),
+                transforms.RandomErasing(p=0.3, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
             

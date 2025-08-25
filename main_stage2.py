@@ -31,16 +31,5 @@ if __name__ == "__main__":
     
     args = parsers.parse_args()
     model = Siamese_SBIR(args).to(device)
-    
-    backbones_state = torch.load(args.feature_dir + "/" + args.dataset_name + "_backbone.pth", weights_only=True)
-    attention_state = torch.load(args.feature_dir + "/" + args.dataset_name + "_attention.pth", weights_only=True)
-    linear_state = torch.load(args.feature_dir + "/" + args.dataset_name + "_linear.pth", weights_only=True)
-    
-    model.sample_embedding_network.load_state_dict(backbones_state['sample_embedding_network'], strict=False)
-    model.sketch_embedding_network.load_state_dict(backbones_state['sketch_embedding_network'], strict=False)
-    model.attention.load_state_dict(attention_state['attention'], strict=False)
-    model.sketch_attention.load_state_dict(attention_state['sketch_attention'], strict=False)
-    model.linear.load_state_dict(linear_state['linear'], strict=False)
-    # model.sketch_linear.load_state_dict(linear_state['sketch_linear'], strict=False)
         
     train_model(model, args)
