@@ -38,33 +38,15 @@ def info_nce_loss(args, features_view1: torch.Tensor, features_view2: torch.Tens
     
     
 def loss_fn(args, features):
-    sketch_feature_1 = features['sketch_feature_1']
-    positive_feature_1 = features['positive_feature_1']
-    negative_feature_1 = features['negative_feature_1']
-    fm_6bs_1 = features['fm_6bs_1']
+    sketch_feature = features['sketch_features']
+    positive_feature = features['positive_feature']
+    negative_feature = features['negative_feature']
+    # fm_6bs_1 = features['fm_6bs_1']
     
-    sketch_feature_2 = features['sketch_feature_2']
-    positive_feature_2 = features['positive_feature_2']
-    negative_feature_2 = features['negative_feature_2']
-    fm_6bs_2 = features['fm_6bs_2']
+    criterion = nn.TripletMarginLoss(margin=args.margin)
+    triplet_loss = criterion(sketch_feature, positive_feature, negative_feature)
     
-    # criterion = nn.TripletMarginLoss(margin=args.margin)
-    # triplet_loss_1 = criterion(sketch_feature_2, positive_feature_1, negative_feature_1)
-    # mse_loss_1 = F.mse_loss(input=fm_6bs_1["fm_6b_ske"], target=fm_6bs_2["fm_6b_pos"], reduction="none")
-    
-    # triplet_loss_2 = criterion(sketch_feature_1, positive_feature_2, negative_feature_2)
-    # mse_loss_2 = F.mse_loss(input=fm_6bs_2["fm_6b_ske"], target=fm_6bs_1["fm_6b_pos"], reduction="none")
-    
-    infonce_sketch = info_nce_loss(args, sketch_feature_1, sketch_feature_2)
-    infonce_positive = info_nce_loss(args, positive_feature_1, positive_feature_2)
-    
-    sum_sketch_features = torch.cat([z for z in [sketch_feature_1, sketch_feature_2]], dim=0)
-    sum_positive_features = torch.cat([z for z in [positive_feature_1, positive_feature_2]], dim=0)
-    infonce_cross = info_nce_loss(args=args, features_view1=sum_sketch_features, features_view2=sum_positive_features)
-    
-    total_loss =  infonce_positive + infonce_sketch + infonce_cross
-    total_loss = torch.mean(total_loss)
-    return total_loss
+    return triplet_loss
     
 def get_transform(type, aug_mode='geometric_strong'):
     """
