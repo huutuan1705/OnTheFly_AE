@@ -48,7 +48,7 @@ def loss_fn(args, features):
     negative_feature_2 = features['negative_feature_2']
     fm_6bs_2 = features['fm_6bs_2']
     
-    # criterion = nn.TripletMarginLoss(margin=args.margin)
+    criterion = nn.TripletMarginLoss(margin=args.margin)
     # triplet_loss_1 = criterion(sketch_feature_2, positive_feature_1, negative_feature_1)
     # mse_loss_1 = F.mse_loss(input=fm_6bs_1["fm_6b_ske"], target=fm_6bs_2["fm_6b_pos"], reduction="none")
     
@@ -60,10 +60,15 @@ def loss_fn(args, features):
     
     sum_sketch_features = torch.cat([z for z in [sketch_feature_1, sketch_feature_2]], dim=0)
     sum_positive_features = torch.cat([z for z in [positive_feature_1, positive_feature_2]], dim=0)
-    infonce_cross = info_nce_loss(args=args, features_view1=sum_sketch_features, features_view2=sum_positive_features)
+    sum_negative_features = torch.cat([z for z in [negative_feature_1, negative_feature_2]], dim=0)
     
-    total_loss =  infonce_positive + infonce_sketch + infonce_cross
-    total_loss = torch.mean(total_loss)
+    
+    infonce_cross = info_nce_loss(args=args, features_view1=sum_sketch_features, features_view2=sum_positive_features)
+    triplet_loss = criterion(sum_sketch_features, sum_positive_features, sum_negative_features)
+    
+    # total_loss =  infonce_positive + infonce_sketch + infonce_cross
+    total_loss = triplet_loss +  0.2*(infonce_positive + infonce_sketch) + 0.5*infonce_cross
+    # total_loss = torch.mean(total_loss)
     return total_loss
     
 def get_transform(type, aug_mode='geometric_strong'):
