@@ -154,8 +154,6 @@ def train_model(model, args):
             losses.append(loss.item())
 
         avg_loss = sum(losses) / len(losses)
-        top1_eval, top5_eval, top10_eval, meanA, meanB = evaluate_model(
-            model, dataloader_test)
                 
         top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(model=model, dataloader_test=dataloader_test)
         if top5_eval > top5:
@@ -166,13 +164,14 @@ def train_model(model, args):
             torch.save(model.state_dict(), "best_top10_model.pth")
             
         torch.save(model.state_dict(), "last_model.pth")
-        print('Top 1 accuracy:  {:.5f}'.format(top1_eval))
-        print('Top 5 accuracy:  {:.5f}'.format(top5_eval))
+        print('Top 1 accuracy : {:.5f}'.format(top1_eval))
+        print('Top 5 accuracy : {:.5f}'.format(top5_eval))
         print('Top 10 accuracy: {:.5f}'.format(top10_eval))
         print('Mean A         : {:.5f}'.format(meanA))
         print('Mean B         : {:.5f}'.format(meanB))
-        print('meanOurA:      : {:.5f}'.format(meanOurA))
-        print('meanOurB:      : {:.5f}'.format(meanOurB))
+        print('meanOurA       : {:.5f}'.format(meanOurA))
+        print('meanOurB       : {:.5f}'.format(meanOurB))
+        print('Loss           : {:.5f}'.format(avg_loss))
         with open("results_log.txt", "a") as f:
             f.write("Epoch {:d} | Top1: {:.5f} | Top5: {:.5f} | Top10: {:.5f} | MeanA: {:.5f} | MeanB: {:.5f} | meanOurA: {:.5f} | meanOurB: {:.5f} \n".format(
                 i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB))

@@ -24,16 +24,22 @@ class Siamese_SBIR(nn.Module):
         negative_img = batch['negative_img'].to(device)
         sketch_imgs = batch['sketch_imgs'].to(device)
 
-        positive_feature, _ = self.sample_embedding_network(positive_img) # (1, 2048)
+        positive_feature, fm_6b_pos = self.sample_embedding_network(positive_img) # (1, 2048)
         negative_feature, _ = self.sample_embedding_network(negative_img) # (1, 2048)
-        sketch_features, _ = self.sketch_embedding_network(sketch_imgs) # (20, 2048)
+        sketch_features, fm_6b_ske = self.sketch_embedding_network(sketch_imgs) # (20, 2048)
 
         positive_feature = self.linear(self.attention(positive_feature))
         negative_feature = self.linear(self.attention(negative_feature))
         sketch_features = self.sketch_linear(self.sketch_attention(sketch_features))
         
+        fm_6bs = {
+            "fm_6b_pos": fm_6b_pos,
+            "fm_6b_ske": fm_6b_ske
+        }
+        
         return {
             "positive_feature": positive_feature, 
             "negative_feature": negative_feature,
-            "sketch_features": sketch_features
+            "sketch_features": sketch_features,
+            "fm_6bs": fm_6bs
         }
