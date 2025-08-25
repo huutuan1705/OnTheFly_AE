@@ -26,7 +26,7 @@ class FGSBIR_Dataset(Dataset):
         
         self.train_transform_1 = get_transform(type='train', aug_mode='geometrci_strong')
         self.train_transform_2 = get_transform(type='train', aug_mode='color_strong')
-        self.neg_transform = get_transform(type='train', aug_mode='auto')
+        # self.neg_transform = get_transform(type='train', aug_mode='auto')
         self.test_transform = get_transform('test')
         
     def __len__(self):
@@ -59,17 +59,20 @@ class FGSBIR_Dataset(Dataset):
             
             positive_image = Image.open(positive_path).convert("RGB")
             negative_image = Image.open(negative_path).convert("RGB")
-            negative_image = self.neg_transform(negative_image)
+            # negative_image = self.neg_transform(negative_image)
             
             sketch_img_1 = self.train_transform_1(sketch_img)
             positive_image_1 = self.train_transform_1(positive_image)
+            negative_image_1 = self.train_transform_1(negative_image)
             
             sketch_img_2 = self.train_transform_2(sketch_img)
             positive_image_2 = self.train_transform_2(positive_image)
+            negative_image_2 = self.train_transform_2(negative_image)
             
             sample = {'sketch_img_1': sketch_img_1, 'sketch_img_2': sketch_img_2,
                       'positive_img_1': positive_image_1, 'positive_img_2': positive_image_2,
-                      'negative_img': negative_image
+                      'negative_img_1': negative_image_1,
+                      'negative_img_2': negative_image_2, 
                       } 
         
         elif self.mode == "test":
