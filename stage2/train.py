@@ -8,7 +8,7 @@ from tqdm import tqdm
 from torch import optim
 import torch.nn.utils as utils
 from stage2.datasets import FGSBIR_Dataset
-from stage2.utils import info_nce_loss
+from stage2.utils import loss_fn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -127,49 +127,35 @@ def train_model(model, args):
     dataloader_train, dataloader_test = get_dataloader(args)
     if args.load_pretrained:
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
-        
-    optimizer = optim.Adam(params=model.sketch_linear.parameters(), lr=args.lr)
-    # optimizer = optim.Adam([
-    #     {'params': model.sketch_embedding_network.parameters(), 'lr': args.lr},
-    #     {'params': model.sketch_attention.parameters(), 'lr': args.lr},
-    #     {'params': model.sketch_attention.parameters(), 'lr': args.lr},
-    # ])
-    criterion = nn.TripletMarginLoss(margin=args.margin)
+
+    # loss_fn = nn.TripletMarginLoss(margin=args.margin)
+    # optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
+    optimizer = optim.AdamW([
+        {'params': model.sample_embedding_network.parameters(), 'lr': args.lr},
+        {'params': model.sketch_embedding_network.parameters(), 'lr': args.lr},
+    ])
+    # scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
+
     top5, top10, top5_best, top10_best, avg_loss = 0, 0, 0, 0, 0
-    loss_buffer = []
-    
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
-        
-        for i, batch_data in enumerate(tqdm(dataloader_train)):
+
+        losses = []
+        for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
             model.train()
-            
-            loss_step, loss_triplet_1, loss_triplet_2, loss_info_nce = 0, 0, 0, 0
-            
+            optimizer.zero_grad()
+
             features = model(batch_data)
-            sketch_features_1 = features['sketch_features_1']
-            # sketch_features_2 = features['sketch_features_2']
-            positive_feature = features['positive_feature']
-            negative_feature = features['negative_feature']
-            
-            for i_sketch in range(len(sketch_features_1)):
-                loss_triplet_1 += criterion(sketch_features_1[i_sketch].unsqueeze(0), positive_feature, negative_feature)
-                # loss_triplet_2 += criterion(sketch_features_2[i_sketch].unsqueeze(0), positive_feature, negative_feature)
-                # loss_info_nce += info_nce_loss(args, sketch_features_1[i_sketch], sketch_features_2[i_sketch])
-                # loss_info_nce += F.mse_loss(sketch_features_1[i_sketch], positive_feature)
-                # loss_info_nce += F.mse_loss(sketch_features_2[i_sketch], positive_feature)
-            
-            loss_step += loss_triplet_1 # + loss_triplet_2 + args.alpha*loss_info_nce
-            loss_buffer.append(loss_step)
-            
-            if (i + 1) % args.backward_iterator == 0 or i == len(dataloader_train)-1: # Update after every 20 images or finish training dataset
-                optimizer.zero_grad()
-                policy_loss = torch.stack(loss_buffer).mean()
-                policy_loss.backward()
-                
-                utils.clip_grad_norm_(model.parameters(), 40)
-                optimizer.step()
-                loss_buffer = []
+            loss = loss_fn(args, features)
+            loss.backward()
+            optimizer.step()
+            # scheduler.step()
+
+            losses.append(loss.item())
+
+        avg_loss = sum(losses) / len(losses)
+        top1_eval, top5_eval, top10_eval, meanA, meanB = evaluate_model(
+            model, dataloader_test)
                 
         top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(model=model, dataloader_test=dataloader_test)
         if top5_eval > top5:
