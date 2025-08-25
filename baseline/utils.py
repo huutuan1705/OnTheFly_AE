@@ -61,6 +61,7 @@ def loss_fn(args, features):
     
     sum_sketch_features = torch.cat([z for z in [sketch_feature_1, sketch_feature_2]], dim=0)
     sum_positive_features = torch.cat([z for z in [positive_feature_1, positive_feature_2]], dim=0)
+    negative_feature = torch.cat([z for z in [negative_feature, negative_feature]], dim=0)
     
     
     infonce_cross = info_nce_loss(args=args, features_view1=sum_sketch_features, features_view2=sum_positive_features)
