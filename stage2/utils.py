@@ -45,9 +45,9 @@ def loss_fn(args, features):
     
     criterion = nn.TripletMarginLoss(margin=args.margin)
     triplet_loss = criterion(sketch_feature, positive_feature, negative_feature)
-    mse_loss = F.mse_loss(input=fm_6bs['fm_6b_ske'], target=fm_6bs['fm_6b_pos'])
+    # mse_loss = F.mse_loss(input=fm_6bs['fm_6b_ske'], target=fm_6bs['fm_6b_pos'])
     
-    return triplet_loss + mse_loss
+    return triplet_loss # + mse_loss
     
 def get_transform(type, aug_mode='geometric_strong'):
     """
