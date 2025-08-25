@@ -26,7 +26,7 @@ class FGSBIR_Dataset(Dataset):
         
         self.train_transform_1 = get_transform(type='train', aug_mode='geometrci_strong')
         self.train_transform_2 = get_transform(type='train', aug_mode='color_strong')
-        self.neg_transform = get_transform(type='train', aug_mode='color_strong')
+        self.neg_transform = get_transform(type='train', aug_mode='auto')
         self.test_transform = get_transform('test')
         
     def __len__(self):
