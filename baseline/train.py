@@ -66,10 +66,18 @@ def evaluate_model(model, dataloader_test):
         num_steps = len(sketch_array_tests[0])
         avererage_area = []
         avererage_area_percentile = []
-
+        mean_rank_ourB = []
+        mean_rank_ourA = []
+        avererage_ourB = []
+        avererage_ourA = []
+        exps = np.linspace(1, num_steps, num_steps) / num_steps
+        factor = np.exp(1 - exps) / np.e
+        sketch_range = []
+        
         rank_all = torch.zeros(len(sketch_array_tests), num_steps)
         rank_all_percentile = torch.zeros(len(sketch_array_tests), num_steps)
-
+        sketch_range = torch.Tensor(sketch_range)
+        
         for i_batch, sampled_batch in enumerate(sketch_array_tests):
             mean_rank = []
             mean_rank_percentile = []
@@ -83,37 +91,36 @@ def evaluate_model(model, dataloader_test):
             for i_sketch in range(sampled_batch.shape[0]):
                 # print("sketch_features[i_sketch].shape: ", sketch_features[i_sketch].shape)
                 sketch_feature = sketch_features[i_sketch]
-                target_distance = F.pairwise_distance(sketch_feature.to(
-                    device), image_array_tests[position_query].to(device))
-                distance = F.pairwise_distance(sketch_feature.unsqueeze(
-                    0).to(device), image_array_tests.to(device))
-
-                rank_all[i_batch, i_sketch] = distance.le(
-                    target_distance).sum()
-
-                rank_all_percentile[i_batch, i_sketch] = (
-                    len(distance) - rank_all[i_batch, i_sketch]) / (len(distance) - 1)
+                target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
+                distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
+                
+                rank_all[i_batch, i_sketch] = distance.le(target_distance).sum()
+                rank_all_percentile[i_batch, i_sketch] = (len(distance) - rank_all[i_batch, i_sketch]) / (len(distance) - 1)
+                
                 if rank_all[i_batch, i_sketch].item() == 0:
                     mean_rank.append(1.)
                 else:
                     mean_rank.append(1/rank_all[i_batch, i_sketch].item())
                     # 1/(rank)
-                    mean_rank_percentile.append(
-                        rank_all_percentile[i_batch, i_sketch].item())
-
+                    mean_rank_percentile.append(rank_all_percentile[i_batch, i_sketch].item())
+                    mean_rank_ourB.append(1/rank_all[i_batch, i_sketch].item() * factor[i_sketch])
+                    mean_rank_ourA.append(rank_all_percentile[i_batch, i_sketch].item()*factor[i_sketch])
+                    
             avererage_area.append(np.sum(mean_rank)/len(mean_rank))
-            avererage_area_percentile.append(
-                np.sum(mean_rank_percentile)/len(mean_rank_percentile))
+            avererage_area_percentile.append(np.sum(mean_rank_percentile)/len(mean_rank_percentile))
+            avererage_ourB.append(np.sum(mean_rank_ourB)/len(mean_rank_ourB))
+            avererage_ourA.append(np.sum(mean_rank_ourA)/len(mean_rank_ourA))
 
         top1_accuracy = rank_all[:, -1].le(1).sum().numpy() / rank_all.shape[0]
         top5_accuracy = rank_all[:, -1].le(5).sum().numpy() / rank_all.shape[0]
-        top10_accuracy = rank_all[:, -
-                                  1].le(10).sum().numpy() / rank_all.shape[0]
+        top10_accuracy = rank_all[:, -1].le(10).sum().numpy() / rank_all.shape[0]
 
         meanMA = np.mean(avererage_area_percentile)
         meanMB = np.mean(avererage_area)
+        meanOurB = np.mean(avererage_ourB)
+        meanOurA = np.mean(avererage_ourA)
 
-        return top1_accuracy, top5_accuracy, top10_accuracy, meanMA, meanMB
+        return top1_accuracy, top5_accuracy, top10_accuracy, meanMA, meanMB, meanOurA, meanOurB
 
 
 def train_model(model, args):
@@ -122,15 +129,16 @@ def train_model(model, args):
     if args.load_pretrained:
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
 
+    lr = args.lr
     # loss_fn = nn.TripletMarginLoss(margin=args.margin)
-    # optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
+    # optimizer = optim.Adam(params=model.parameters(), lr=lr)
     optimizer = optim.AdamW([
-        {'params': model.sample_embedding_network.parameters(), 'lr': args.lr},
-        {'params': model.sketch_embedding_network.parameters(), 'lr': args.lr},
+        {'params': model.sample_embedding_network.parameters(), 'lr': lr},
+        {'params': model.sketch_embedding_network.parameters(), 'lr': lr},
     ])
     # scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
 
-    top5, top10, top5_best, top10_best, avg_loss = 0, 0, 0, 0, 0
+    top5, top10, avg_loss = 0, 0, 0
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
 
@@ -140,7 +148,7 @@ def train_model(model, args):
             optimizer.zero_grad()
 
             features = model(batch_data)
-            loss = loss_fn(args, features)
+            loss = loss_fn(args, features, i_epoch)
             loss.backward()
             optimizer.step()
             # scheduler.step()
@@ -148,66 +156,27 @@ def train_model(model, args):
             losses.append(loss.item())
 
         avg_loss = sum(losses) / len(losses)
-        top1_eval, top5_eval, top10_eval, meanA, meanB = evaluate_model(
+        top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(
             model, dataloader_test)
-
-        if top5_eval > top5_best and top10_eval > top10_best:
-            top5_best = top5_eval
-            top10_best = top10_eval
-            torch.save(model.state_dict(), "best_model.pth")
-            torch.save(
-                {
-                    'sample_embedding_network': model.sample_embedding_network.state_dict(),
-                    'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
-                }, args.dataset_name + '_backbone.pth')
-
-            torch.save({'attention': model.attention.state_dict(),
-                        'sketch_attention': model.sketch_attention.state_dict(),
-                        }, args.dataset_name + '_attention.pth')
-            torch.save({'linear': model.linear.state_dict(),
-                        'sketch_linear': model.sketch_linear.state_dict(),
-                        }, args.dataset_name + '_linear.pth')
             
             
         if top5_eval > top5:
             top5 = top5_eval
             torch.save(model.state_dict(), "best_top5_model.pth")
-            torch.save(
-                {
-                    'sample_embedding_network': model.sample_embedding_network.state_dict(),
-                    'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
-                }, args.dataset_name + '_top5_backbone.pth')
-
-            torch.save({'attention': model.attention.state_dict(),
-                        'sketch_attention': model.sketch_attention.state_dict(),
-                        }, args.dataset_name + '_top5_attention.pth')
-            torch.save({'linear': model.linear.state_dict(),
-                        'sketch_linear': model.sketch_linear.state_dict(),
-                        }, args.dataset_name + '_top5_linear.pth')
 
         if top10_eval > top10:
             top10 = top10_eval
             torch.save(model.state_dict(), "best_top10_model.pth")
-            torch.save(
-                {
-                    'sample_embedding_network': model.sample_embedding_network.state_dict(),
-                    'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
-                }, args.dataset_name + '_top10_backbone.pth')
-
-            torch.save({'attention': model.attention.state_dict(),
-                        'sketch_attention': model.sketch_attention.state_dict(),
-                        }, args.dataset_name + '_top10_attention.pth')
-            torch.save({'linear': model.linear.state_dict(),
-                        'sketch_linear': model.sketch_linear.state_dict(),
-                        }, args.dataset_name + '_top10_linear.pth')
             
         torch.save(model.state_dict(), "last_model.pth")
-        print('Top 1 accuracy:  {:.4f}'.format(top1_eval))
-        print('Top 5 accuracy:  {:.4f}'.format(top5_eval))
+        print('Top 1 accuracy : {:.4f}'.format(top1_eval))
+        print('Top 5 accuracy : {:.4f}'.format(top5_eval))
         print('Top 10 accuracy: {:.4f}'.format(top10_eval))
         print('Mean A         : {:.4f}'.format(meanA))
         print('Mean B         : {:.4f}'.format(meanB))
+        print('meanOurA       : {:.4f}'.format(meanOurA))
+        print('meanOurB       : {:.4f}'.format(meanOurB))
         print('Loss:            {:.4f}'.format(avg_loss))
         with open("results_log.txt", "a") as f:
-            f.write("Epoch {:d} | Top1: {:.4f} | Top5: {:.4f} | Top10: {:.4f} | MeanA: {:.4f} | MeanB: {:.4f} | Loss: {:.4f}\n".format(
-                i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, avg_loss))
+            f.write("Epoch {:d} | Top1: {:.4f} | Top5: {:.4f} | Top10: {:.4f} | MeanA: {:.4f} | MeanB: {:.4f} | meanOurA: {:.4f} | meanOurB: {:.4f} | Loss: {:.4f}\n".format(
+                i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB, avg_loss))
