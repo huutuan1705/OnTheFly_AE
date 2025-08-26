@@ -37,7 +37,7 @@ def info_nce_loss(args, features_view1: torch.Tensor, features_view2: torch.Tens
     return loss
     
     
-def loss_fn(args, features):
+def loss_fn(args, features, i_epoch):
     sketch_feature_1 = features['sketch_feature_1']
     positive_feature_1 = features['positive_feature_1']
     negative_feature_1 = features['negative_feature_1']
@@ -65,7 +65,9 @@ def loss_fn(args, features):
     infonce_cross = info_nce_loss(args=args, features_view1=sum_sketch_features, features_view2=sum_positive_features)
     triplet_loss = criterion(sum_sketch_features, sum_positive_features, sum_negative_feature)
     
-    total_loss = triplet_loss # + 0.2*infonce_cross + 0.2*(infonce_positive + infonce_sketch) 
+    total_loss = triplet_loss 
+    if i_epoch+1 > 200:
+        total_loss = total_loss + 0.2*infonce_cross + 0.2*(infonce_positive + infonce_sketch) 
     return total_loss
     
 def get_transform(type, aug_mode='geometric_strong'):
