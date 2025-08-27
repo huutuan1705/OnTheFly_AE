@@ -37,7 +37,7 @@ def info_nce_loss(args, features_view1: torch.Tensor, features_view2: torch.Tens
     return loss
     
     
-def loss_fn(args, features, i_epoch):
+def loss_fn(args, features):
     sketch_feature_1 = features['sketch_feature_1']
     positive_feature_1 = features['positive_feature_1']
     negative_feature_1 = features['negative_feature_1']
