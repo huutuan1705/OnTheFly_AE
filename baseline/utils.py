@@ -66,7 +66,7 @@ def loss_fn(args, features, i_epoch):
     triplet_loss = criterion(sum_sketch_features, sum_positive_features, sum_negative_feature)
     
     total_loss = triplet_loss 
-    if i_epoch+1 > 200:
+    if args.load_pretrained:
         total_loss = total_loss + 0.2*infonce_cross + 0.2*(infonce_positive + infonce_sketch) 
     return total_loss
     

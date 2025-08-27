@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import torch
 import torch.nn as nn
@@ -141,14 +142,14 @@ def train_model(model, args):
     top5, top10, avg_loss = 0, 0, 0
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
-
+                
         losses = []
         for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
             model.train()
             optimizer.zero_grad()
 
             features = model(batch_data)
-            loss = loss_fn(args, features, i_epoch)
+            loss = loss_fn(args, features)
             loss.backward()
             optimizer.step()
             # scheduler.step()
@@ -162,13 +163,13 @@ def train_model(model, args):
             
         if top5_eval > top5:
             top5 = top5_eval
-            torch.save(model.state_dict(), "best_top5_model.pth")
+            torch.save(model.state_dict(), os.path.join(args.save_dir, "best_top5_model.pth"))
 
         if top10_eval > top10:
             top10 = top10_eval
-            torch.save(model.state_dict(), "best_top10_model.pth")
+            torch.save(model.state_dict(), os.path.join(args.save_dir, "best_top10_model.pth"))
             
-        torch.save(model.state_dict(), "last_model.pth")
+        torch.save(model.state_dict(), os.path.join(args.save_dir, "last_model.pth"))
         print('Top 1 accuracy : {:.4f}'.format(top1_eval))
         print('Top 5 accuracy : {:.4f}'.format(top5_eval))
         print('Top 10 accuracy: {:.4f}'.format(top10_eval))
