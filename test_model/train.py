@@ -7,8 +7,8 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from torch import optim
 import torch.nn.utils as utils
-from stage2.datasets import FGSBIR_Dataset
-from stage2.utils import loss_fn
+from test_model.datasets import FGSBIR_Dataset
+from test_model.utils import loss_fn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

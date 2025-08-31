@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from zeta import SSM
+
 class SelfAttention(nn.Module):
     def __init__(self, args):
         super(SelfAttention, self).__init__()
@@ -27,7 +29,11 @@ class SelfAttention(nn.Module):
     def fix_weights(self):
         for x in self.parameters():
             x.requires_grad = False
-    
+
+class SSMAttention(nn.Module):
+    def __init__(self, args, dim, dt_rank, dim_inner, d_state):
+        super(SSMAttention, self).__init__()   
+        self.ssm = SSM(in_features=dim, dt_rank=dt_rank, dim_inner=dim_inner, d_state=d_state) 
     
 class Linear_global(nn.Module):
     def __init__(self, feature_num):
