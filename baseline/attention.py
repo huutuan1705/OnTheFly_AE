@@ -31,9 +31,26 @@ class SelfAttention(nn.Module):
             x.requires_grad = False
 
 class SSMAttention(nn.Module):
-    def __init__(self, args, dim, dt_rank, dim_inner, d_state):
-        super(SSMAttention, self).__init__()   
-        self.ssm = SSM(in_features=dim, dt_rank=dt_rank, dim_inner=dim_inner, d_state=d_state) 
+    def __init__(self, args):
+        super(SSMAttention, self).__init__() 
+        self.pool_method =  nn.AdaptiveAvgPool2d(1)
+        self.norm = nn.LayerNorm(2048)  
+        self.ssm = SSM(in_features=2048, dt_rank=16, dim_inner=2048, d_state=8) 
+        self.dropout = nn.Dropout(p=0.2)
+        
+    def forward(self, x):
+        identify = x
+        bs, c, h, w = x.shape
+        x_att = x.reshape(bs, c, h*w).transpose(1, 2)
+        x_att = self.norm(x_att)
+        
+        att_out = self.ssm(x_att)
+        att_out = self.dropout(att_out)
+        att_out = att_out.transpose(1, 2).reshape(bs, c, h, w)
+        
+        output = identify * att_out + identify
+        output = self.pool_method(output).view(-1, 2048)
+        return F.normalize(output)
     
 class Linear_global(nn.Module):
     def __init__(self, feature_num):
@@ -48,3 +65,14 @@ class Linear_global(nn.Module):
     def fix_weights(self):
         for x in self.parameters():
             x.requires_grad = False
+
+if __name__ == "__main__":
+    dim = 16
+    dt_rank = 4
+    dim_inner = 32
+    d_state = 8
+    
+    model = SSMAttention(None, dim, dt_rank, dim_inner, d_state)
+    x = torch.randn(2, 5, dim)
+    out = model(x)
+    print("Output shape:", out.shape)

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from baseline.backbones import InceptionV3
-from baseline.attention import Linear_global, SelfAttention
+from baseline.attention import Linear_global, SelfAttention, SSMAttention
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -11,11 +11,13 @@ class Siamese_SBIR(nn.Module):
         super(Siamese_SBIR, self).__init__()
         self.args = args
         self.sample_embedding_network = InceptionV3(args=args)
-        self.attention = SelfAttention(args)
+        # self.attention = SelfAttention(args)
+        self.attention = SSMAttention(args)
         self.linear = Linear_global(feature_num=64)
         
         self.sketch_embedding_network = InceptionV3(args=args)
-        self.sketch_attention = SelfAttention(args)
+        # self.sketch_attention = SelfAttention(args)
+        self.sketch_attention = SSMAttention(args)
         self.sketch_linear = Linear_global(feature_num=64)
 
         def init_weights(m):
@@ -23,6 +25,9 @@ class Siamese_SBIR(nn.Module):
                 nn.init.kaiming_normal_(m.weight)
         
         if self.args.use_kaiming_init:
+            self.attention.apply(init_weights)
+            self.sketch_attention.apply(init_weights)
+            
             self.linear.apply(init_weights)
             self.sketch_linear.apply(init_weights)
             
