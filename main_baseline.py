@@ -12,7 +12,7 @@ if __name__ == "__main__":
     parsers.add_argument('--num_heads', type=int, default=8)
     parsers.add_argument('--root_dir', type=str, default='/kaggle/input/fg-sbir-dataset')
     parsers.add_argument('--pretrained_dir', type=str, default='/kaggle/input/base_ae_model/pytorch/default/1/best_model.pth')
-    parsers.add_argument('--save_dir', type=str, default='/content/drive/MyDrive/SimCLR_Shoe')
+    parsers.add_argument('--save_dir', type=str, default='/kaggle/working/')
     
     parsers.add_argument('--use_kaiming_init', type=bool, default=True)
     parsers.add_argument('--load_pretrained', type=bool, default=False)
