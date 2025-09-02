@@ -71,101 +71,77 @@ def build_rel_pos_index(H, W):
     return rel_index  # (L, L)
 
 class SelfAttention2D(nn.Module):
-    """
-    Nâng cấp từ bản gốc:
-      - Bottleneck: 2048 -> d_model (mặc định 512) -> 2048
-      - Relative positional bias 2D cho H=W=8
-      - PreNorm + Residual + DropPath + MLP (Transformer-style)
-      - Attention pooling thay vì AvgPool
-    """
-    def __init__(self, args, num_heads=8, in_ch=2048, H=8, W=8, d_model=512, attn_drop=0.0, proj_drop=0.2, drop_path=0.0):
-        super().__init__()
-        assert (H, W) == (8, 8), "Code này giả định feature 8x8; nếu khác, truyền H, W tương ứng."
-        self.in_ch = in_ch
-        self.H, self.W = H, W
+    def __init__(self, args, num_heads=8, in_ch=2048, H=8, W=8, d_model=512,
+                 attn_drop=0.0, proj_drop=0.2, drop_path=0.0):
+        super(SelfAttention2D, self).__init__()
+        self.in_ch, self.H, self.W = in_ch, H, W
         self.L = H * W
         self.num_heads = num_heads
         self.d_model = d_model
         self.d_head = d_model // num_heads
 
-        # Bottleneck projections
         self.in_proj = nn.Linear(in_ch, d_model, bias=True)
         self.qkv = nn.Linear(d_model, d_model * 3, bias=True)
         self.attn_drop = nn.Dropout(attn_drop)
-        self.out_proj = nn.Linear(d_model, in_ch, bias=True)
+        # 🔧 giữ ở d_model để cộng residual với tokens (d_model)
+        self.out_proj = nn.Linear(d_model, d_model, bias=True)
         self.proj_drop = nn.Dropout(proj_drop)
 
-        # Relative position bias
         table_size = (2 * H - 1) * (2 * W - 1)
         self.rel_pos_bias = nn.Parameter(torch.zeros(num_heads, table_size))
         nn.init.trunc_normal_(self.rel_pos_bias, std=0.02)
-        rel_index = build_rel_pos_index(H, W)  # (L, L)
-        self.register_buffer("rel_index", rel_index, persistent=False)
+        self.register_buffer("rel_index", build_rel_pos_index(H, W), persistent=False)
 
-        # Norms & MLP
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
         self.mlp = MLP(d_model, hidden_mult=4, p=proj_drop)
 
-        # Residual scaling (gamma) để ổn định
         self.gamma_attn = nn.Parameter(torch.zeros(1))
         self.gamma_mlp  = nn.Parameter(torch.zeros(1))
-
-        # Stochastic depth
         self.drop_path = DropPath(drop_path) if drop_path > 0 else nn.Identity()
 
-        # Learnable query cho attention pooling
+        # Attention pooling và chiếu về 2048 ở đây
         self.pool_query = nn.Parameter(torch.randn(1, 1, d_model) * 0.02)
         self.pool_norm = nn.LayerNorm(d_model)
         self.pool_proj = nn.Linear(d_model, in_ch)
 
     def forward(self, x):
-        """
-        x: (B, C=2048, H=8, W=8)
-        return: (B, 2048) L2-normalized
-        """
         B, C, H, W = x.shape
         assert C == self.in_ch and H == self.H and W == self.W
 
-        # (B, L, C)
-        tokens = x.permute(0, 2, 3, 1).reshape(B, self.L, C)
-        tokens = self.in_proj(tokens)  # (B, L, d_model)
+        tokens = x.permute(0, 2, 3, 1).reshape(B, self.L, C)        # (B, L, 2048)
+        tokens = self.in_proj(tokens)                                # (B, L, d_model)
 
-        # --- Self-Attention block (pre-norm) ---
         y = self.norm1(tokens)
-        qkv = self.qkv(y).reshape(B, self.L, 3, self.num_heads, self.d_head).permute(2, 0, 3, 1, 4)  # (3, B, heads, L, dh)
-        q, k, v = qkv[0], qkv[1], qkv[2]  # each: (B, heads, L, dh)
+        qkv = self.qkv(y).reshape(B, self.L, 3, self.num_heads, self.d_head).permute(2,0,3,1,4)
+        q, k, v = qkv[0], qkv[1], qkv[2]                             # (B, h, L, dh)
 
-        attn = (q @ k.transpose(-2, -1)) / math.sqrt(self.d_head)  # (B, heads, L, L)
-
-        # add relative position bias
-        bias = self.rel_pos_bias[:, self.rel_index.view(-1)].view(self.num_heads, self.L, self.L)  # (heads, L, L)
-        attn = attn + bias.unsqueeze(0)  # broadcast over batch
-
-        attn = attn.softmax(dim=-1)
+        attn = (q @ k.transpose(-2, -1)) / math.sqrt(self.d_head)    # (B, h, L, L)
+        bias = self.rel_pos_bias[:, self.rel_index.view(-1)].view(self.num_heads, self.L, self.L)
+        attn = (attn + bias.unsqueeze(0)).softmax(dim=-1)
         attn = self.attn_drop(attn)
-        z = attn @ v  # (B, heads, L, dh)
-        z = z.transpose(1, 2).reshape(B, self.L, self.d_model)
-        z = self.out_proj(z)
+
+        z = attn @ v                                                # (B, h, L, dh)
+        z = z.transpose(1, 2).reshape(B, self.L, self.d_model)      # (B, L, d_model)
+        z = self.out_proj(z)                                        # (B, L, d_model)
         z = self.proj_drop(z)
+        tokens = tokens + self.drop_path(self.gamma_attn * z)       # ✅ cùng chiều (B,L,d_model)
 
-        tokens = tokens + self.drop_path(self.gamma_attn * z)
-
-        # --- MLP block (pre-norm) ---
         y2 = self.norm2(tokens)
-        z2 = self.mlp(y2)
-        tokens = tokens + self.drop_path(self.gamma_mlp * z2)  # (B, L, d_model)
+        z2 = self.mlp(y2)                                           # (B, L, d_model)
+        tokens = tokens + self.drop_path(self.gamma_mlp * z2)
 
-        # --- Attention Pooling ---
-        q_pool = self.pool_query.expand(B, -1, -1)  # (B, 1, d_model)
+        # Attention pooling -> (B, d_model) -> chiếu về 2048
+        q_pool = self.pool_query.expand(B, -1, -1)                  # (B,1,d_model)
         k_pool = self.pool_norm(tokens)
         v_pool = tokens
-        attn_pool = (q_pool @ k_pool.transpose(1, 2)) / math.sqrt(self.d_model)  # (B, 1, L)
+        attn_pool = (q_pool @ k_pool.transpose(1, 2)) / math.sqrt(self.d_model)  # (B,1,L)
         attn_pool = attn_pool.softmax(dim=-1)
-        pooled = attn_pool @ v_pool  # (B, 1, d_model)
-        pooled = self.pool_proj(pooled.squeeze(1))  # (B, C=2048)
+        pooled = (attn_pool @ v_pool).squeeze(1)                    # (B, d_model)
+        pooled = self.pool_proj(pooled)                             # (B, 2048)
 
         return F.normalize(pooled, dim=1)
+
     
 # class SSMAttention(nn.Module):
 #     def __init__(self, args):
