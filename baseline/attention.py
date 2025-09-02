@@ -31,7 +31,7 @@ class SelfAttention(nn.Module):
         identify = x
         bs, c, h, w = x.shape
         x_att = x.reshape(bs, c, h*w).transpose(1, 2)
-        x_att = x_att + self.pos_encoding(x)
+        x_att = x_att + self.pos_encoding.to(x.device)
         x_att = self.norm(x_att)
         
         att_out, _  = self.mha(x_att, x_att, x_att)
