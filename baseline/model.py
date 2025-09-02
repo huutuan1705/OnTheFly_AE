@@ -11,15 +11,15 @@ class Siamese_SBIR(nn.Module):
         super(Siamese_SBIR, self).__init__()
         self.args = args
         self.sample_embedding_network = InceptionV3(args=args)
-        # self.attention = SelfAttention(args)
+        self.attention = SelfAttention(args)
         # self.attention = SSMAttention(args)
-        self.attention = SelfAttention2D(args)
+        # self.attention = SelfAttention2D(args)
         self.linear = Linear_global(feature_num=64)
         
         self.sketch_embedding_network = InceptionV3(args=args)
-        # self.sketch_attention = SelfAttention(args)
+        self.sketch_attention = SelfAttention(args)
         # self.sketch_attention = SSMAttention(args)
-        self.sketch_attention = SelfAttention2D(args)
+        # self.sketch_attention = SelfAttention2D(args)
         self.sketch_linear = Linear_global(feature_num=64)
 
         def init_weights(m):
