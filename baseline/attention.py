@@ -13,12 +13,27 @@ class SelfAttention(nn.Module):
         self.mha = nn.MultiheadAttention(2048, num_heads=args.num_heads, batch_first=True)
         # self.mha = nn.MultiheadAttention(2048, num_heads=8, batch_first=True)
         self.dropout = nn.Dropout(p=0.2)
+        self.pos_encoding = self._generate_pos_encoding(8, 8, 2048)
         
+    def _generate_pos_encoding(self, height, width, d_model):
+        """Tạo positional encoding cho spatial positions"""
+        pe = torch.zeros(height * width, d_model)
+        position = torch.arange(0, height * width, dtype=torch.float).unsqueeze(1)
+        
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * 
+                           (-math.log(10000.0) / d_model))
+        
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        return nn.Parameter(pe.unsqueeze(0), requires_grad=False)
+    
     def forward(self, x):
         identify = x
         bs, c, h, w = x.shape
         x_att = x.reshape(bs, c, h*w).transpose(1, 2)
+        x_att = x_att + self.pos_encoding(x)
         x_att = self.norm(x_att)
+        
         att_out, _  = self.mha(x_att, x_att, x_att)
         att_out = self.dropout(att_out)
         att_out = att_out.transpose(1, 2).reshape(bs, c, h, w)
