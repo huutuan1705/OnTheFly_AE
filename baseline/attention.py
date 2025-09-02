@@ -35,7 +35,7 @@ class SSMAttention(nn.Module):
         super(SSMAttention, self).__init__() 
         self.pool_method =  nn.AdaptiveAvgPool2d(1)
         self.norm = nn.LayerNorm(2048)  
-        self.ssm = SSM(in_features=2048, dt_rank=16, dim_inner=2048, d_state=8) 
+        self.ssm = SSM(in_features=2048, dt_rank=16, dim_inner=2048, d_state=16) 
         self.dropout = nn.Dropout(p=0.2)
         
     def forward(self, x):
