@@ -3,7 +3,7 @@ import torch.nn as nn
 import math
 import torch.nn.functional as F
 
-from zeta import SSM
+# from zeta import SSM
 
 class SelfAttention(nn.Module):
     def __init__(self, args):
