@@ -26,10 +26,10 @@ class SelfAttention(nn.Module):
         att_out = att_out.transpose(1, 2).reshape(bs, c, h, w)
         
         output = identify * att_out + identify
-        output = self.pool_method(output).view(-1, 2048)
+        avg_out = self.pool_method(output).view(-1, 2048)
         
         max_out = self.max_pool(output).view(-1, 2048)
-        combine = 0.7*output + 0.3*max_out
+        combine = 0.7*avg_out + 0.3*max_out
         return F.normalize(combine)
         # return F.normalize(output)
     
