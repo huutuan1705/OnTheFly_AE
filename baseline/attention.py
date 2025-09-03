@@ -1,15 +1,11 @@
 import torch
 import torch.nn as nn
-import math
 import torch.nn.functional as F
-
-# from zeta import SSM
 
 class SelfAttention(nn.Module):
     def __init__(self, args):
         super(SelfAttention, self).__init__()
         self.pool_method =  nn.AdaptiveAvgPool2d(1)
-        self.max_pool =  nn.AdaptiveMaxPool2d(1)
         self.norm = nn.LayerNorm(2048)
         self.mha = nn.MultiheadAttention(2048, num_heads=args.num_heads, batch_first=True)
         # self.mha = nn.MultiheadAttention(2048, num_heads=8, batch_first=True)
@@ -26,17 +22,33 @@ class SelfAttention(nn.Module):
         att_out = att_out.transpose(1, 2).reshape(bs, c, h, w)
         
         output = identify * att_out + identify
-        avg_out = self.pool_method(output).view(-1, 2048)
+        output = self.pool_method(output).view(-1, 2048)
         
-        max_out = self.max_pool(output).view(-1, 2048)
-        combine = 0.9*avg_out + 0.1*max_out
-        return F.normalize(combine)
-        # return F.normalize(output)
+        return F.normalize(output)
     
     def fix_weights(self):
         for x in self.parameters():
             x.requires_grad = False
-    
+
+class SketchAttention(nn.Module):
+    def __init__(self, args):
+        super(SelfAttention, self).__init__()
+        self.pool_method =  nn.AdaptiveAvgPool2d(1)
+        self.norm = nn.LayerNorm(2048)
+        self.mha = nn.MultiheadAttention(2048, num_heads=args.num_heads, batch_first=True)
+        # self.mha = nn.MultiheadAttention(2048, num_heads=8, batch_first=True)
+        self.dropout = nn.Dropout(p=0.2)
+        
+    def forward(self, x):
+        identify = x
+        x_att = self.norm(x)
+        att_out, _  = self.mha(x_att, x_att, x_att)
+        att_out = self.dropout(att_out)
+        
+        output = identify * att_out + identify
+        output = F.normalize(output)
+        
+        
 class Linear_global(nn.Module):
     def __init__(self, feature_num):
         super(Linear_global, self).__init__()

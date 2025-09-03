@@ -51,16 +51,17 @@ class FGSBIR_Dataset(Dataset):
             negative_path = os.path.join(self.root_dir, 'photo', negative_sample + '.png')
             
             vector_x = self.coordinate[sketch_path]
-            sketch_img = rasterize_sketch(vector_x)
-               
-            sketch_img = Image.fromarray(sketch_img).convert("RGB")
+            list_sketch_imgs = rasterize_sketch_steps(vector_x)
+            
+            sketch_raw_imgs = [Image.fromarray(sk_img).convert("RGB") for sk_img in list_sketch_imgs]
+            sketch_imgs = torch.stack([self.test_transform(sk_img) for sk_img in sketch_raw_imgs])
+            
             
             positive_image = Image.open(positive_path).convert("RGB")
             negative_image = Image.open(negative_path).convert("RGB")
             
-            sketch_imgs = self.train_transform(sketch_img)
-            positive_image = self.train_transform(positive_image)
-            negative_image = self.train_transform(negative_image)
+            positive_image = self.test_transform(positive_image)
+            negative_image = self.test_transform(negative_image)
             
             sample = {'sketch_imgs': sketch_imgs,
                       'positive_img': positive_image, 

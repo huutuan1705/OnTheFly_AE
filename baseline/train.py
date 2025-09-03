@@ -39,28 +39,19 @@ def evaluate_model(model, dataloader_test):
             for data_sketch in batch['sketch_imgs']:
                 sketch_feature, _ = model.sketch_embedding_network(
                     data_sketch.to(device))
-                sketch_feature = model.sketch_linear(
-                    model.sketch_attention(sketch_feature))
-                # sketch_feature, _ = model.sketch_attention(
-                #     model.sketch_embedding_network(data_sketch.to(device))
-                # )
-                # print("sketch_feature.shape: ", sketch_feature.shape) #(25, 2048)
-                sketch_features_all = torch.cat(
-                    (sketch_features_all, sketch_feature.detach()))
+                sketch_feature = model.sketch_linear(model.sketch_attention(sketch_feature)) #(25, 2048)
+                
+                sketch_features_all = torch.cat((sketch_features_all, sketch_feature.detach()))
 
             # print("sketch_feature_ALL.shape: ", sketch_features_all.shape) # (25, 2048)
             sketch_array_tests.append(sketch_features_all.cpu())
             sketch_names.extend(batch['sketch_path'])
 
             if batch['positive_path'][0] not in image_names:
-                positive_feature, _ = model.sample_embedding_network(
-                    batch['positive_img'].to(device))
-                positive_feature = model.linear(
-                    model.attention(positive_feature))
-                # positive_feature, _ = model.attention(
-                #     model.sample_embedding_network(batch['positive_img'].to(device)))
-                image_array_tests = torch.cat(
-                    (image_array_tests, positive_feature))
+                positive_feature, _ = model.sample_embedding_network(batch['positive_img'].to(device))
+                positive_feature = model.linear(model.attention(positive_feature))
+                
+                image_array_tests = torch.cat((image_array_tests, positive_feature))
                 image_names.extend(batch['positive_path'])
 
         # print("sketch_array_tests[0].shape", sketch_array_tests[0].shape) #(25, 2048)
@@ -84,13 +75,11 @@ def evaluate_model(model, dataloader_test):
             mean_rank_percentile = []
             sketch_name = sketch_names[i_batch]
 
-            sketch_query_name = '_'.join(
-                sketch_name.split('/')[-1].split('_')[:-1])
+            sketch_query_name = '_'.join(sketch_name.split('/')[-1].split('_')[:-1])
             position_query = image_names.index(sketch_query_name)
             sketch_features = sampled_batch
 
             for i_sketch in range(sampled_batch.shape[0]):
-                # print("sketch_features[i_sketch].shape: ", sketch_features[i_sketch].shape)
                 sketch_feature = sketch_features[i_sketch]
                 target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
                 distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
@@ -136,8 +125,6 @@ def train_model(model, args):
     optimizer = optim.AdamW([
         {'params': model.sample_embedding_network.parameters(), 'lr': lr},
         {'params': model.sketch_embedding_network.parameters(), 'lr': lr},
-        {'params': model.attention.parameters(), 'lr': lr},
-        {'params': model.sketch_attention.parameters(), 'lr': lr},
     ])
     # scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
 
