@@ -19,7 +19,6 @@ class SelfAttention(nn.Module):
         identify = x
         bs, c, h, w = x.shape
         x_att = x.reshape(bs, c, h*w).transpose(1, 2)
-        x_att = x_att + self.pos_encoding.to(x.device)
         x_att = self.norm(x_att)
         
         att_out, _  = self.mha(x_att, x_att, x_att)
@@ -28,8 +27,8 @@ class SelfAttention(nn.Module):
         
         output = identify * att_out + identify
         output = self.pool_method(output).view(-1, 2048)
-        max_out = self.max_pool(output).view(-1, 2048)
         
+        max_out = self.max_pool(output).view(-1, 2048)
         combine = 0.7*output + 0.3*max_out
         return F.normalize(combine)
         # return F.normalize(output)
