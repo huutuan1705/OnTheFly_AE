@@ -29,7 +29,7 @@ class SelfAttention(nn.Module):
         avg_out = self.pool_method(output).view(-1, 2048)
         
         max_out = self.max_pool(output).view(-1, 2048)
-        combine = 0.7*avg_out + 0.3*max_out
+        combine = 0.9*avg_out + 0.1*max_out
         return F.normalize(combine)
         # return F.normalize(output)
     
