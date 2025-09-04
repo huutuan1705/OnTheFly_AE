@@ -5,12 +5,6 @@ import torchvision.transforms as transforms
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def np2th(weights, conv=False):
-    "Convert HWIO to OIHW"
-    if conv:
-        weights = weights.transpose([3, 2, 0, 1])
-    return torch.from_numpy(weights)
-
 def info_nce_loss(args, features_view1: torch.Tensor, features_view2: torch.Tensor):
     """
     InfoNCE (NT-Xent) for SimCLR
@@ -49,10 +43,7 @@ def loss_fn(args, features):
     fm_6bs_2 = features['fm_6bs_2']
     
     criterion = nn.TripletMarginLoss(margin=args.margin)
-    # triplet_loss_1 = criterion(sketch_feature_2, positive_feature_1, negative_feature_1)
     # mse_loss_1 = F.mse_loss(input=fm_6bs_1["fm_6b_ske"], target=fm_6bs_2["fm_6b_pos"], reduction="none")
-    
-    # triplet_loss_2 = criterion(sketch_feature_1, positive_feature_2, negative_feature_2)
     # mse_loss_2 = F.mse_loss(input=fm_6bs_2["fm_6b_ske"], target=fm_6bs_1["fm_6b_pos"], reduction="none")
     
     infonce_sketch = info_nce_loss(args, sketch_feature_1, sketch_feature_2)
