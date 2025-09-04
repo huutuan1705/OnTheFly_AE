@@ -38,8 +38,7 @@ def evaluate_model(model, dataloader_test):
             for data_sketch in batch['sketch_imgs']:
                 sketch_feature, _ = model.sketch_embedding_network(
                     data_sketch.to(device))
-                sketch_feature = model.sketch_linear(
-                    model.sketch_attention(sketch_feature))
+                sketch_feature = model.sketch_attention(sketch_feature)
                 # sketch_feature, _ = model.sketch_attention(
                 #     model.sketch_embedding_network(data_sketch.to(device))
                 # )
@@ -86,7 +85,7 @@ def evaluate_model(model, dataloader_test):
             sketch_query_name = '_'.join(
                 sketch_name.split('/')[-1].split('_')[:-1])
             position_query = image_names.index(sketch_query_name)
-            sketch_features = sampled_batch
+            sketch_features = model.bilstm(sampled_batch)
 
             for i_sketch in range(sampled_batch.shape[0]):
                 # print("sketch_features[i_sketch].shape: ", sketch_features[i_sketch].shape)
