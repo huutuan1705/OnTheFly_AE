@@ -151,9 +151,9 @@ def train_model(model, args):
 
             loss = 0
             for idx in range(len(batch_data['sketch_imgs'])): # len(batch_data['sketch_imgs']) = batch_size
-                sketch_seq_feature, _ = model.sketch_embedding_network(batch_data['sketch_imgs'][idx])
-                positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'][idx].unsqueeze(0))
-                negative_feature, _ = model.sample_embedding_network(batch_data['negative_img'][idx].unsqueeze(0))
+                sketch_seq_feature, _ = model.sketch_embedding_network(batch_data['sketch_imgs'][idx].to(device))
+                positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'][idx].unsqueeze(0).to(device))
+                negative_feature, _ = model.sample_embedding_network(batch_data['negative_img'][idx].unsqueeze(0).to(device))
                 
                 sketch_seq_feature = model.bilstm(model.sketch_attention(sketch_seq_feature))
                 positive_feature = model.linear(model.attention(positive_feature))
