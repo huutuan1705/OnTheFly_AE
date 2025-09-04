@@ -14,7 +14,7 @@ class BiLSTM(nn.Module):
         self.proj = Linear_global(feature_num=64)
         
     def forward(self, x):
-        x = self.bilstm(x)
+        x, _ = self.bilstm(x)
         x = self.attn(x)
         x = self.proj(x)
         
@@ -63,3 +63,11 @@ class Siamese_SBIR(nn.Module):
     #         "sketch_features": sketch_features,
     #         "fm_6bs": fm_6bs
     #     }
+
+if __name__ == "__main__":
+    dim = 2048
+    dt_rank = 4
+    dim_inner = 32
+    d_state = 8
+    
+    
