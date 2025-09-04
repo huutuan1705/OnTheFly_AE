@@ -14,7 +14,7 @@ class BiLSTM(nn.Module):
         self.proj = Linear_global(feature_num=64)
         
     def forward(self, x):
-        x, _ = self.bilstm(x)
+        # x, _ = self.bilstm(x)
         x = self.attn(x)
         x = self.proj(x)
         
