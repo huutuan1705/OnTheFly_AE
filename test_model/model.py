@@ -6,6 +6,19 @@ from baseline.attention import Linear_global, SelfAttention, SketchAttention
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+class BiLSTM(nn.Module):
+    def __init__(self, args):
+        super(BiLSTM, self).__init__()
+        self.bilstm = nn.LSTM(input_size=2048, hidden_size=1024, num_layers=2, batch_first=True, bidirectional=True, dropout=0.1)
+        self.attn = SketchAttention(args)
+        self.proj = Linear_global(args)
+        
+    def forward(self, x):
+        x = self.bilstm(x)
+        x = self.attn(x)
+        x = self.proj(x)
+        
+        return x
 
 class Siamese_SBIR(nn.Module):
     def __init__(self, args):
@@ -17,7 +30,14 @@ class Siamese_SBIR(nn.Module):
 
         self.sketch_embedding_network = InceptionV3(args=args)
         self.sketch_attention = SelfAttention(args)
-        self.sketch_linear = Linear_global(feature_num=64)
+        
+        self.sample_embedding_network.fix_weights()
+        self.sketch_embedding_network.fix_weights()
+        self.attention.fix_weights()
+        self.sketch_attention.fix_weights()
+        self.linear.fix_weights()
+        
+        self.bilstm = BiLSTM(args)        
 
     def forward(self, batch):
         positive_img = batch['positive_img'].to(device)

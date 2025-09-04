@@ -131,8 +131,7 @@ def train_model(model, args):
     # loss_fn = nn.TripletMarginLoss(margin=args.margin)
     # optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
     optimizer = optim.AdamW([
-        {'params': model.sample_embedding_network.parameters(), 'lr': args.lr},
-        {'params': model.sketch_embedding_network.parameters(), 'lr': args.lr},
+        {'params': model.bilstm.parameters(), 'lr': args.lr},
     ])
     # scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
 
@@ -145,8 +144,10 @@ def train_model(model, args):
             model.train()
             optimizer.zero_grad()
 
-            features = model(batch_data)
-            loss = loss_fn(args, features)
+            loss = 0
+            print(len(batch_data['sketch_imgs']))
+            # for idx in range(len(batch_data['sketch_imgs'])):
+            #     print(batch_data['sketch_imgs'][idx].shape)
             loss.backward()
             optimizer.step()
             # scheduler.step()
