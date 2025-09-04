@@ -1,7 +1,7 @@
 import torch
 import argparse
-from test_model.model import Siamese_SBIR
-from test_model.train import train_model
+from stage_2.model import Siamese_SBIR
+from stage_2.train import train_model
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -42,5 +42,6 @@ if __name__ == "__main__":
         model.linear.load_state_dict(linear_state['linear'])
         model.sketch_embedding_network.load_state_dict(backbones_state['sketch_embedding_network'], strict=False)
         model.sketch_attention.load_state_dict(attention_state['sketch_attention'], strict=False)
+        model.sketch_linear.load_state_dict(attention_state['sketch_linear'], strict=False)
     
     train_model(model, args)
