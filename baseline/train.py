@@ -132,42 +132,52 @@ def train_model(model, args):
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
                 
-        losses = []
-        for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
-            model.train()
-            optimizer.zero_grad()
+        # losses = []
+        # for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
+        #     model.train()
+        #     optimizer.zero_grad()
 
-            features = model(batch_data)
-            loss = loss_fn(args, features)
-            loss.backward()
-            optimizer.step()
-            # scheduler.step()
+        #     features = model(batch_data)
+        #     loss = loss_fn(args, features)
+        #     loss.backward()
+        #     optimizer.step()
 
-            losses.append(loss.item())
-
-        avg_loss = sum(losses) / len(losses)
+        #     losses.append(loss.item())
+        # avg_loss = sum(losses) / len(losses)
+        
         top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(
             model, dataloader_test)
-            
             
         if top5_eval > top5:
             top5 = top5_eval
             torch.save(model.state_dict(), os.path.join(args.save_dir, "best_top5_model.pth"))
+            torch.save({
+                        'sample_embedding_network': model.sample_embedding_network.state_dict(),
+                        'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
+                    }, args.dataset_name + '_backbone.pth')
+            torch.save({'attention': model.attention.state_dict(),
+                            'sketch_attention': model.sketch_attention.state_dict(),
+                            }, args.dataset_name + '_attention.pth')
+            torch.save({'linear': model.linear.state_dict(),
+                            'sketch_linear': model.sketch_linear.state_dict(),
+                            }, args.dataset_name + '_linear.pth')
 
         if top10_eval > top10:
             top10 = top10_eval
             torch.save(model.state_dict(), os.path.join(args.save_dir, "best_top10_model.pth"))
             
         torch.save(model.state_dict(), os.path.join(args.save_dir, "last_model.pth"))
-        print('Top 1 accuracy : {:.4f}'.format(top1_eval))
-        print('Top 5 accuracy : {:.4f}'.format(top5_eval))
-        print('Top 10 accuracy: {:.4f}'.format(top10_eval))
-        print('Mean A         : {:.4f}'.format(meanA))
-        print('Mean B         : {:.4f}'.format(meanB))
-        print('meanOurA       : {:.4f}'.format(meanOurA))
-        print('meanOurB       : {:.4f}'.format(meanOurB))
-        print('Loss:            {:.4f}'.format(avg_loss))
+        
+        
+        print('Top 1 accuracy : {:.5f}'.format(top1_eval))
+        print('Top 5 accuracy : {:.5f}'.format(top5_eval))
+        print('Top 10 accuracy: {:.5f}'.format(top10_eval))
+        print('Mean A         : {:.5f}'.format(meanA))
+        print('Mean B         : {:.5f}'.format(meanB))
+        print('meanOurA       : {:.5f}'.format(meanOurA))
+        print('meanOurB       : {:.5f}'.format(meanOurB))
+        print('Loss:            {:.5f}'.format(avg_loss))
         
         with open(os.path.join(args.save_dir, "results_log_2.txt"), "a") as f:
-            f.write("Epoch {:d} | Top1: {:.4f} | Top5: {:.4f} | Top10: {:.4f} | MeanA: {:.4f} | MeanB: {:.4f} | meanOurA: {:.4f} | meanOurB: {:.4f} | Loss: {:.4f}\n".format(
+            f.write("Epoch {:d} | Top1: {:.5f} | Top5: {:.5f} | Top10: {:.5f} | MeanA: {:.5f} | MeanB: {:.5f} | meanOurA: {:.5f} | meanOurB: {:.5f} | Loss: {:.5f}\n".format(
                 i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB, avg_loss))
