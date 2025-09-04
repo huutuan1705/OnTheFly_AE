@@ -11,7 +11,7 @@ class BiLSTM(nn.Module):
         super(BiLSTM, self).__init__()
         self.bilstm = nn.LSTM(input_size=2048, hidden_size=1024, num_layers=2, batch_first=True, bidirectional=True, dropout=0.1)
         self.attn = SketchAttention(args)
-        self.proj = Linear_global(args)
+        self.proj = Linear_global(feature_num=64)
         
     def forward(self, x):
         x = self.bilstm(x)
