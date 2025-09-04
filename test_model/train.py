@@ -128,7 +128,7 @@ def train_model(model, args):
     if args.load_pretrained:
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
 
-    # loss_fn = nn.TripletMarginLoss(margin=args.margin)
+    loss_fn = nn.TripletMarginLoss(margin=args.margin)
     # optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
     optimizer = optim.AdamW([
         {'params': model.bilstm.parameters(), 'lr': args.lr},
@@ -141,13 +141,29 @@ def train_model(model, args):
 
         losses = []
         for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
-            model.train()
+            model.sketch_embedding_network.eval()
+            model.sample_embedding_network.eval()
+            model.sketch_attention.eval()
+            model.attention.eval()
+            model.linear.eval()
+            model.bilstm.train()
             optimizer.zero_grad()
 
             loss = 0
-            print(len(batch_data['sketch_imgs']))
-            # for idx in range(len(batch_data['sketch_imgs'])):
-            #     print(batch_data['sketch_imgs'][idx].shape)
+            for idx in range(len(batch_data['sketch_imgs'])): # len(batch_data['sketch_imgs']) = batch_size
+                sketch_seq_feature, _ = model.sketch_embedding_network(batch_data['sketch_imgs'][idx])
+                positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'][idx].unsqueeze(0))
+                negative_feature, _ = model.sample_embedding_network(batch_data['negative_img'][idx].unsqueeze(0))
+                
+                sketch_seq_feature = model.bilstm(model.sketch_attention(sketch_seq_feature))
+                positive_feature = model.linear(model.attention(positive_feature))
+                negative_feature = model.linear(model.attention(negative_feature))
+                
+                positive_feature = positive_feature.repeat(sketch_seq_feature.shape[0], 1)
+                negative_feature = negative_feature.repeat(sketch_seq_feature.shape[0], 1)
+                
+                loss += loss_fn(sketch_seq_feature, positive_feature, negative_feature)      
+            
             loss.backward()
             optimizer.step()
             # scheduler.step()
