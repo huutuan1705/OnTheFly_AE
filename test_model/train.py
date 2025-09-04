@@ -47,7 +47,7 @@ def evaluate_model(model, dataloader_test):
                     (sketch_features_all, sketch_feature.detach()))
 
             # print("sketch_feature_ALL.shape: ", sketch_features_all.shape) # (25, 2048)
-            sketch_array_tests.append(sketch_features_all.cpu())
+            sketch_array_tests.append(sketch_features_all)
             sketch_names.extend(batch['sketch_path'])
 
             if batch['positive_path'][0] not in image_names:
