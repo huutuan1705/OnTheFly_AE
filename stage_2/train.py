@@ -148,7 +148,7 @@ def train_model(model, args):
             optimizer.zero_grad()
 
             loss = 0
-            for idx in range(len(batch_data['sketch_imgs'])): # len(batch_data['sketch_imgs']) = batch_size
+            for idx in range(len(batch_data['sketch_imgs_1'])): # len(batch_data['sketch_imgs']) = batch_size
                 sketch_seq_feature_1, _ = model.sketch_embedding_network(batch_data['sketch_imgs_1'][idx].to(device))
                 sketch_seq_feature_2, _ = model.sketch_embedding_network(batch_data['sketch_imgs_2'][idx].to(device))
                 
