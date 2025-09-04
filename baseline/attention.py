@@ -32,11 +32,11 @@ class SelfAttention(nn.Module):
 
 class SketchAttention(nn.Module):
     def __init__(self, args):
-        super(SelfAttention, self).__init__()
+        super(SketchAttention, self).__init__()
         self.pool_method =  nn.AdaptiveAvgPool2d(1)
         self.norm = nn.LayerNorm(2048)
-        self.mha = nn.MultiheadAttention(2048, num_heads=args.num_heads, batch_first=True)
-        # self.mha = nn.MultiheadAttention(2048, num_heads=8, batch_first=True)
+        # self.mha = nn.MultiheadAttention(2048, num_heads=args.num_heads, batch_first=True)
+        self.mha = nn.MultiheadAttention(2048, num_heads=8, batch_first=True)
         self.dropout = nn.Dropout(p=0.2)
         
     def forward(self, x):
@@ -47,6 +47,7 @@ class SketchAttention(nn.Module):
         
         output = identify * att_out + identify
         output = F.normalize(output)
+        return output
         
         
 class Linear_global(nn.Module):
@@ -64,12 +65,12 @@ class Linear_global(nn.Module):
             x.requires_grad = False
 
 if __name__ == "__main__":
-    dim = 16
+    dim = 2048
     dt_rank = 4
     dim_inner = 32
     d_state = 8
     
-    # model = SSMAttention(None, dim, dt_rank, dim_inner, d_state)
-    # x = torch.randn(2, 5, dim)
-    # out = model(x)
-    # print("Output shape:", out.shape)
+    model = SketchAttention(None)
+    x = torch.randn(2, 5, dim)
+    out = model(x)
+    print("Output shape:", out.shape)
