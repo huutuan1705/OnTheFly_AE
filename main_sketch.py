@@ -33,7 +33,7 @@ if __name__ == "__main__":
     model = Siamese_SBIR(args).to(device)
     
     if args.load_pretrained is False:
-        backbones_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_bacbkbone.pth", weights_only=True)
+        backbones_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_backbone.pth", weights_only=True)
         attention_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_attention.pth", weights_only=True)
         linear_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_linear.pth", weights_only=True)
 
