@@ -39,10 +39,8 @@ def evaluate_model(model, dataloader_test):
                 sketch_feature, _ = model.sketch_embedding_network(
                     data_sketch.to(device))
                 sketch_feature = model.sketch_attention(sketch_feature)
-                sketch_feature = model.sketch_linear(sketch_feature)
-                # sketch_feature, _ = model.sketch_attention(
-                #     model.sketch_embedding_network(data_sketch.to(device))
-                # )
+                # sketch_feature = model.sketch_linear(sketch_feature)
+                
                 # print("sketch_feature.shape: ", sketch_feature.shape) #(25, 2048)
                 sketch_features_all = torch.cat(
                     (sketch_features_all, sketch_feature.detach()))
@@ -86,8 +84,8 @@ def evaluate_model(model, dataloader_test):
             sketch_query_name = '_'.join(
                 sketch_name.split('/')[-1].split('_')[:-1])
             position_query = image_names.index(sketch_query_name)
-            # sketch_features = model.bilstm(sampled_batch)
-            sketch_features = sampled_batch
+            sketch_features = model.bilstm(sampled_batch)
+            # sketch_features = sampled_batch
 
             for i_sketch in range(sampled_batch.shape[0]):
                 # print("sketch_features[i_sketch].shape: ", sketch_features[i_sketch].shape)
@@ -132,8 +130,8 @@ def train_model(model, args):
     loss_fn = nn.TripletMarginLoss(margin=args.margin)
     # optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
     optimizer = optim.AdamW([
-        {'params': model.sketch_linear.parameters(), 'lr': args.lr},
-        # {'params': model.bilstm.parameters(), 'lr': args.lr},
+        # {'params': model.sketch_linear.parameters(), 'lr': args.lr},
+        {'params': model.bilstm.parameters(), 'lr': args.lr},
     ])
     # scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
 

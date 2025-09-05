@@ -38,7 +38,7 @@ class Siamese_SBIR(nn.Module):
         self.sketch_attention.fix_weights()
         self.linear.fix_weights()
         
-        # self.bilstm = BiLSTM(args)        
+        self.bilstm = BiLSTM(args)        
 
     # def forward(self, batch):
     #     positive_img = batch['positive_img'].to(device)
