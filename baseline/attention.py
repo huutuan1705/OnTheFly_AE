@@ -65,7 +65,7 @@ class SketchAttention(nn.Module):
     def forward(self, x):
         residual = x
         x = self.attn_norm(x)
-        x, _ = self.mha(x)
+        x, _ = self.mha(x, x, x)
         x = x + residual
         
         residual = x
