@@ -57,18 +57,23 @@ class Mlp(nn.Module):
 class SketchAttention(nn.Module):
     def __init__(self, args):
         super(SketchAttention, self).__init__()
-        self.norm = nn.LayerNorm(2048)
+        self.attn_norm = nn.LayerNorm(2048, eps=1e-6)
+        self.mlp_norm = nn.LayerNorm(2048, eps=1e-6)
+        self.mlp = Mlp()
         self.mha = nn.MultiheadAttention(2048, num_heads=8, batch_first=True)
-        self.dropout = nn.Dropout(p=0.2)
         
     def forward(self, x):
-        identify = x
-        x_att = self.norm(x)
-        att_out, _  = self.mha(x_att, x_att, x_att)
-        att_out = self.dropout(att_out)
+        residual = x
+        x = self.attn_norm(x)
+        x, _ = self.mha(x)
+        x = x + residual
         
-        output = identify * att_out + identify
-        output = F.normalize(output)
+        residual = x
+        x = self.mlp_norm(x)
+        x = self.mlp(x)
+        x = x + residual
+        
+        output = F.normalize(x)
         return output
         
         
