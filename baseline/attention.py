@@ -30,50 +30,23 @@ class SelfAttention(nn.Module):
         for x in self.parameters():
             x.requires_grad = False
 
-class Mlp(nn.Module):
-    def __init__(self):
-        super(Mlp, self).__init__()
-        self.fc1 = nn.Linear(2048, 3072)
-        self.fc2 = nn.Linear(3072, 2048)
-        self.act = nn.GELU()
-        self.dropout = nn.Dropout(0.1)
-        
-        self._init_weights()
-        
-    def _init_weights(self):
-        nn.init.xavier_uniform_(self.fc1.weight)
-        nn.init.xavier_uniform_(self.fc2.weight)
-        nn.init.normal_(self.fc1.bias, std=1e-6)
-        nn.init.normal_(self.fc2.bias, std=1e-6)
-        
-    def forward(self, x):
-        x = self.fc1(x)
-        x = self.act(x)
-        x = self.dropout(x)
-        x = self.fc2(x)
-        x = self.dropout(x)
-        return x
-    
 class SketchAttention(nn.Module):
     def __init__(self, args):
         super(SketchAttention, self).__init__()
-        self.attn_norm = nn.LayerNorm(2048, eps=1e-6)
-        self.mlp_norm = nn.LayerNorm(2048, eps=1e-6)
-        self.mlp = Mlp()
+        self.pool_method =  nn.AdaptiveAvgPool2d(1)
+        self.norm = nn.LayerNorm(2048)
+        # self.mha = nn.MultiheadAttention(2048, num_heads=args.num_heads, batch_first=True)
         self.mha = nn.MultiheadAttention(2048, num_heads=8, batch_first=True)
+        self.dropout = nn.Dropout(p=0.2)
         
     def forward(self, x):
-        residual = x
-        x = self.attn_norm(x)
-        x, _ = self.mha(x, x, x)
-        x = x + residual
+        identify = x
+        x_att = self.norm(x)
+        att_out, _  = self.mha(x_att, x_att, x_att)
+        # att_out = self.dropout(att_out)
         
-        residual = x
-        x = self.mlp_norm(x)
-        x = self.mlp(x)
-        x = x + residual
-        
-        output = F.normalize(x)
+        output = att_out + identify
+        output = F.normalize(output)
         return output
         
         
