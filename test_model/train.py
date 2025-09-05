@@ -146,8 +146,8 @@ def train_model(model, args):
             model.sketch_attention.eval()
             model.attention.eval()
             model.linear.eval()
-            # model.bilstm.train()
-            model.sketch_linear.train()
+            model.bilstm.train()
+            # model.sketch_linear.train()
             optimizer.zero_grad()
 
             loss = 0
@@ -156,8 +156,8 @@ def train_model(model, args):
                 positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'][idx].unsqueeze(0).to(device))
                 negative_feature, _ = model.sample_embedding_network(batch_data['negative_img'][idx].unsqueeze(0).to(device))
                 
-                # sketch_seq_feature = model.bilstm(model.sketch_attention(sketch_seq_feature))
-                sketch_seq_feature = model.sketch_linear(model.sketch_attention(sketch_seq_feature))
+                sketch_seq_feature = model.bilstm(model.sketch_attention(sketch_seq_feature))
+                # sketch_seq_feature = model.sketch_linear(model.sketch_attention(sketch_seq_feature))
                 positive_feature = model.linear(model.attention(positive_feature))
                 negative_feature = model.linear(model.attention(negative_feature))
                 
