@@ -43,7 +43,7 @@ class SketchAttention(nn.Module):
         identify = x
         x_att = self.norm(x)
         att_out, _  = self.mha(x_att, x_att, x_att)
-        # att_out = self.dropout(att_out)
+        att_out = self.dropout(att_out)
         
         output = identify * att_out + identify
         output = F.normalize(output)
