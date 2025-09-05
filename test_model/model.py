@@ -30,6 +30,7 @@ class Siamese_SBIR(nn.Module):
 
         self.sketch_embedding_network = InceptionV3(args=args)
         self.sketch_attention = SelfAttention(args)
+        self.sketch_linear = Linear_global(feature_num=64)
         
         self.sample_embedding_network.fix_weights()
         self.sketch_embedding_network.fix_weights()
@@ -37,7 +38,7 @@ class Siamese_SBIR(nn.Module):
         self.sketch_attention.fix_weights()
         self.linear.fix_weights()
         
-        self.bilstm = BiLSTM(args)        
+        # self.bilstm = BiLSTM(args)        
 
     # def forward(self, batch):
     #     positive_img = batch['positive_img'].to(device)
