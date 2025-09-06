@@ -4,50 +4,6 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-def np2th(weights, conv=False):
-    "Convert HWIO to OIHW"
-    if conv:
-        weights = weights.transpose([3, 2, 0, 1])
-    return torch.from_numpy(weights)
-
-def info_nce_loss(args, features_view1: torch.Tensor, features_view2: torch.Tensor):
-    """
-    InfoNCE (NT-Xent) for SimCLR
-    features_view1, features_view2: (B, D)
-    """
-    temperature = float(args.temperature)
-    B, D = features_view1.shape
-    device = features_view1.device
-
-    z = torch.cat([features_view1, features_view2], dim=0)
-
-    logits = z @ z.t()                              # (2B, 2B)
-    mask = torch.eye(2 * B, dtype=torch.bool, device=device)
-    logits = logits.masked_fill(mask, float('-inf'))
-
-    logits = logits / temperature
-
-    labels = torch.cat([
-        torch.arange(B, 2*B, device=device),
-        torch.arange(0, B, device=device)
-    ], dim=0).long()
-
-    loss = F.cross_entropy(logits, labels)
-    return loss
-    
-    
-def loss_fn(args, features):
-    sketch_feature = features['sketch_features']
-    positive_feature = features['positive_feature']
-    negative_feature = features['negative_feature']
-    fm_6bs = features['fm_6bs']
-    
-    criterion = nn.TripletMarginLoss(margin=args.margin)
-    triplet_loss = criterion(sketch_feature, positive_feature, negative_feature)
-    # mse_loss = F.mse_loss(input=fm_6bs['fm_6b_ske'], target=fm_6bs['fm_6b_pos'])
-    
-    return triplet_loss # + mse_loss
     
 def get_transform(type, aug_mode='geometric_strong'):
     """

@@ -6,9 +6,7 @@ import torch.nn.functional as F
 
 from tqdm import tqdm
 from torch import optim
-import torch.nn.utils as utils
-from test_model.datasets import FGSBIR_Dataset
-from test_model.utils import loss_fn
+from phase2.datasets import FGSBIR_Dataset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -84,7 +82,7 @@ def evaluate_model(model, dataloader_test):
             sketch_query_name = '_'.join(
                 sketch_name.split('/')[-1].split('_')[:-1])
             position_query = image_names.index(sketch_query_name)
-            sketch_features = model.bilstm(sampled_batch)
+            sketch_features = model.attn(sampled_batch)
             # sketch_features = sampled_batch
 
             for i_sketch in range(sampled_batch.shape[0]):
@@ -131,7 +129,7 @@ def train_model(model, args):
     # optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
     optimizer = optim.AdamW([
         # {'params': model.sketch_linear.parameters(), 'lr': args.lr},
-        {'params': model.bilstm.parameters(), 'lr': args.lr},
+        {'params': model.attn.parameters(), 'lr': args.lr},
     ])
     # scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
 
@@ -146,7 +144,7 @@ def train_model(model, args):
             model.sketch_attention.eval()
             model.attention.eval()
             model.linear.eval()
-            model.bilstm.train()
+            model.attn.train()
             # model.sketch_linear.train()
             optimizer.zero_grad()
 
@@ -156,7 +154,7 @@ def train_model(model, args):
                 positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'][idx].unsqueeze(0).to(device))
                 negative_feature, _ = model.sample_embedding_network(batch_data['negative_img'][idx].unsqueeze(0).to(device))
                 
-                sketch_seq_feature = model.bilstm(model.sketch_attention(sketch_seq_feature))
+                sketch_seq_feature = model.attn(model.sketch_attention(sketch_seq_feature))
                 # sketch_seq_feature = model.sketch_linear(model.sketch_attention(sketch_seq_feature))
                 positive_feature = model.linear(model.attention(positive_feature))
                 negative_feature = model.linear(model.attention(negative_feature))
