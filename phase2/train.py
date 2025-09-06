@@ -7,7 +7,8 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from torch import optim
 import torch.nn.utils as utils
-from stage_2.datasets import FGSBIR_Dataset
+from test_model.datasets import FGSBIR_Dataset
+from test_model.utils import loss_fn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -37,10 +38,9 @@ def evaluate_model(model, dataloader_test):
             for data_sketch in batch['sketch_imgs']:
                 sketch_feature, _ = model.sketch_embedding_network(
                     data_sketch.to(device))
-                sketch_feature = model.sketch_linear(model.sketch_attention(sketch_feature)) 
-                # sketch_feature, _ = model.sketch_attention(
-                #     model.sketch_embedding_network(data_sketch.to(device))
-                # )
+                sketch_feature = model.sketch_attention(sketch_feature)
+                # sketch_feature = model.sketch_linear(sketch_feature)
+                
                 # print("sketch_feature.shape: ", sketch_feature.shape) #(25, 2048)
                 sketch_features_all = torch.cat(
                     (sketch_features_all, sketch_feature.detach()))
@@ -84,7 +84,8 @@ def evaluate_model(model, dataloader_test):
             sketch_query_name = '_'.join(
                 sketch_name.split('/')[-1].split('_')[:-1])
             position_query = image_names.index(sketch_query_name)
-            sketch_features = sampled_batch
+            sketch_features = model.bilstm(sampled_batch)
+            # sketch_features = sampled_batch
 
             for i_sketch in range(sampled_batch.shape[0]):
                 # print("sketch_features[i_sketch].shape: ", sketch_features[i_sketch].shape)
@@ -129,7 +130,8 @@ def train_model(model, args):
     loss_fn = nn.TripletMarginLoss(margin=args.margin)
     # optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
     optimizer = optim.AdamW([
-        {'params': model.sketch_linear.parameters(), 'lr': args.lr},
+        # {'params': model.sketch_linear.parameters(), 'lr': args.lr},
+        {'params': model.bilstm.parameters(), 'lr': args.lr},
     ])
     # scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
 
@@ -138,44 +140,31 @@ def train_model(model, args):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
 
         losses = []
-        for _, batch_data in enumerate(tqdm(dataloader_train)):
+        for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
             model.sketch_embedding_network.eval()
             model.sample_embedding_network.eval()
             model.sketch_attention.eval()
             model.attention.eval()
             model.linear.eval()
-            model.sketch_linear.train()
+            model.bilstm.train()
+            # model.sketch_linear.train()
             optimizer.zero_grad()
 
             loss = 0
-            for idx in range(len(batch_data['sketch_imgs_1'])): # len(batch_data['sketch_imgs']) = batch_size
-                sketch_seq_feature_1, _ = model.sketch_embedding_network(batch_data['sketch_imgs_1'][idx].to(device))
-                sketch_seq_feature_2, _ = model.sketch_embedding_network(batch_data['sketch_imgs_2'][idx].to(device))
+            for idx in range(len(batch_data['sketch_imgs'])): # len(batch_data['sketch_imgs']) = batch_size
+                sketch_seq_feature, _ = model.sketch_embedding_network(batch_data['sketch_imgs'][idx].to(device))
+                positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'][idx].unsqueeze(0).to(device))
+                negative_feature, _ = model.sample_embedding_network(batch_data['negative_img'][idx].unsqueeze(0).to(device))
                 
-                positive_feature_1, _ = model.sample_embedding_network(batch_data['positive_img_1'][idx].unsqueeze(0).to(device))
-                negative_feature_1, _ = model.sample_embedding_network(batch_data['negative_img_1'][idx].unsqueeze(0).to(device))
+                sketch_seq_feature = model.bilstm(model.sketch_attention(sketch_seq_feature))
+                # sketch_seq_feature = model.sketch_linear(model.sketch_attention(sketch_seq_feature))
+                positive_feature = model.linear(model.attention(positive_feature))
+                negative_feature = model.linear(model.attention(negative_feature))
                 
-                positive_feature_2, _ = model.sample_embedding_network(batch_data['positive_img_2'][idx].unsqueeze(0).to(device))
-                negative_feature_2, _ = model.sample_embedding_network(batch_data['negative_img_2'][idx].unsqueeze(0).to(device))
+                positive_feature = positive_feature.repeat(sketch_seq_feature.shape[0], 1)
+                negative_feature = negative_feature.repeat(sketch_seq_feature.shape[0], 1)
                 
-                sketch_seq_feature_1 = model.sketch_linear(model.sketch_attention(sketch_seq_feature_1)) # (25, 64)
-                sketch_seq_feature_2 = model.sketch_linear(model.sketch_attention(sketch_seq_feature_2))
-                
-                positive_feature_1 = model.linear(model.attention(positive_feature_1)) # (1, 64)
-                negative_feature_1 = model.linear(model.attention(negative_feature_1))
-                
-                positive_feature_2 = model.linear(model.attention(positive_feature_2))
-                negative_feature_2 = model.linear(model.attention(negative_feature_2))
-                
-                positive_feature_1 = positive_feature_1.repeat(sketch_seq_feature_1.shape[0], 1)
-                negative_feature_1 = negative_feature_1.repeat(sketch_seq_feature_1.shape[0], 1)
-                positive_feature_2 = positive_feature_2.repeat(sketch_seq_feature_2.shape[0], 1)
-                negative_feature_2 = negative_feature_2.repeat(sketch_seq_feature_2.shape[0], 1)
-                
-                sum_sketch_features = torch.cat([z for z in [sketch_seq_feature_1, sketch_seq_feature_2]], dim=0)
-                sum_positive_features = torch.cat([z for z in [positive_feature_1, positive_feature_2]], dim=0)
-                sum_negative_feature = torch.cat([z for z in [negative_feature_1, negative_feature_2]], dim=0)
-                loss += loss_fn(sum_sketch_features, sum_positive_features, sum_negative_feature)      
+                loss += loss_fn(sketch_seq_feature, positive_feature, negative_feature)      
             
             loss.backward()
             optimizer.step()
