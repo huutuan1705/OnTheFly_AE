@@ -24,9 +24,7 @@ class FGSBIR_Dataset(Dataset):
         self.train_sketch = [x for x in self.coordinate if 'train' in x]
         self.test_sketch = [x for x in self.coordinate if 'test' in x]
         
-        self.train_transform_1 = get_transform(type='train', aug_mode='geometrci_strong')
-        self.train_transform_2 = get_transform(type='train', aug_mode='color_strong')
-        # self.neg_transform = get_transform(type='train', aug_mode='auto')
+        self.train_transform = get_transform(type='train', aug_mode='auto')
         self.test_transform = get_transform('test')
         
     def __len__(self):
@@ -56,24 +54,18 @@ class FGSBIR_Dataset(Dataset):
             list_sketch_imgs = rasterize_sketch_steps(vector_x)
             
             sketch_raw_imgs = [Image.fromarray(sk_img).convert("RGB") for sk_img in list_sketch_imgs]
-            sketch_imgs_1 = torch.stack([self.train_transform_1(sk_img) for sk_img in sketch_raw_imgs])
-            sketch_imgs_2 = torch.stack([self.train_transform_2(sk_img) for sk_img in sketch_raw_imgs])
+            sketch_imgs = torch.stack([self.train_transform(sk_img) for sk_img in sketch_raw_imgs])
             
             
             positive_image = Image.open(positive_path).convert("RGB")
             negative_image = Image.open(negative_path).convert("RGB")
-            # negative_image = self.neg_transform(negative_image)
             
-            positive_image_1 = self.test_transform(positive_image)
-            negative_image_1 = self.test_transform(negative_image)
+            positive_image = self.test_transform(positive_image)
+            negative_image = self.test_transform(negative_image)
             
-            positive_image_2 = self.test_transform(positive_image)
-            negative_image_2 = self.test_transform(negative_image)
-            
-            sample = {'sketch_imgs_1': sketch_imgs_1, 'sketch_imgs_2': sketch_imgs_2,
-                      'positive_img_1': positive_image_1, 'positive_img_2': positive_image_2,
-                      'negative_img_1': negative_image_1,
-                      'negative_img_2': negative_image_2, 
+            sample = {'sketch_imgs': sketch_imgs,
+                      'positive_img': positive_image, 
+                      'negative_img': negative_image
                       } 
         
         elif self.mode == "test":
@@ -91,7 +83,6 @@ class FGSBIR_Dataset(Dataset):
             
             # sketch_images = rasterize_sketch(vector_x)
             # sketch_images = self.test_transform(Image.fromarray(sketch_images).convert("RGB"))
-    
             
             sample = {'sketch_imgs': sketch_images, 'sketch_path': sketch_path,
                       'positive_img': positive_image, 'positive_path': positive_sample,

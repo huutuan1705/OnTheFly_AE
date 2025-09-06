@@ -1,7 +1,7 @@
 import torch
 import argparse
-from test_model.model import Siamese_SBIR
-from test_model.train import train_model
+from phase2.model import Siamese_SBIR
+from phase2.train import train_model
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
