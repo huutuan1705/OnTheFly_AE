@@ -58,8 +58,8 @@ def loss_fn(args, features):
     
     total_loss = triplet_loss 
     if args.stage2:
-        total_loss = total_loss + + 0.2*(infonce_positive + infonce_sketch)
-        # total_loss = total_loss + 0.2*infonce_cross   
+        # total_loss = total_loss + + 0.2*(infonce_positive + infonce_sketch)
+        total_loss = total_loss + 0.2*infonce_cross   
     return total_loss
     
 def get_transform(type, aug_mode='geometric_strong'):
