@@ -132,18 +132,18 @@ def train_model(model, args):
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
                 
-        # losses = []
-        # for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
-        #     model.train()
-        #     optimizer.zero_grad()
+        losses = []
+        for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
+            model.train()
+            optimizer.zero_grad()
 
-        #     features = model(batch_data)
-        #     loss = loss_fn(args, features)
-        #     loss.backward()
-        #     optimizer.step()
+            features = model(batch_data)
+            loss = loss_fn(args, features)
+            loss.backward()
+            optimizer.step()
 
-        #     losses.append(loss.item())
-        # avg_loss = sum(losses) / len(losses)
+            losses.append(loss.item())
+        avg_loss = sum(losses) / len(losses)
         
         top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(
             model, dataloader_test)
