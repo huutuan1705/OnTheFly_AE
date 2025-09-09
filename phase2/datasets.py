@@ -63,7 +63,7 @@ class FGSBIR_Dataset(Dataset):
             positive_image = self.test_transform(positive_image)
             negative_image = self.test_transform(negative_image)
             
-            sample = {'sketch_imgs': sketch_imgs,
+            sample = {'sketch_imgs': sketch_imgs, 'sketch_paths': sketch_path,
                       'positive_img': positive_image, 
                       'negative_img': negative_image
                       } 
