@@ -53,9 +53,9 @@ def evaluate_model(model, dataloader_test):
                 
                 image_array_tests = torch.cat((image_array_tests, positive_feature))
                 image_names.extend(batch['positive_path'])
-
-        print("sketch_array_tests shape", sketch_array_tests.shape) #(25, 2048)
+                
         print("image_array_tests shape", image_array_tests.shape)
+        print("sketch_array_tests shape", sketch_array_tests.shape) #(25, 2048)
         num_steps = len(sketch_array_tests[0])
         avererage_area = []
         avererage_area_percentile = []
