@@ -55,7 +55,7 @@ def evaluate_model(model, dataloader_test):
                 image_names.extend(batch['positive_path'])
                 
         print("image_array_tests shape", image_array_tests.shape)
-        print("sketch_array_tests shape", sketch_array_tests.shape) #(25, 2048)
+        print("sketch_array_tests shape", sketch_array_tests[0].shape) #(25, 2048)
         num_steps = len(sketch_array_tests[0])
         avererage_area = []
         avererage_area_percentile = []
