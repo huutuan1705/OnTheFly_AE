@@ -54,7 +54,8 @@ def evaluate_model(model, dataloader_test):
                 image_array_tests = torch.cat((image_array_tests, positive_feature))
                 image_names.extend(batch['positive_path'])
 
-        # print("sketch_array_tests[0].shape", sketch_array_tests[0].shape) #(25, 2048)
+        print("sketch_array_tests shape", sketch_array_tests.shape) #(25, 2048)
+        print("image_array_tests shape", image_array_tests.shape)
         num_steps = len(sketch_array_tests[0])
         avererage_area = []
         avererage_area_percentile = []
@@ -132,18 +133,18 @@ def train_model(model, args):
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
                 
-        losses = []
-        for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
-            model.train()
-            optimizer.zero_grad()
+        # losses = []
+        # for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
+        #     model.train()
+        #     optimizer.zero_grad()
 
-            features = model(batch_data)
-            loss = loss_fn(args, features)
-            loss.backward()
-            optimizer.step()
+        #     features = model(batch_data)
+        #     loss = loss_fn(args, features)
+        #     loss.backward()
+        #     optimizer.step()
 
-            losses.append(loss.item())
-        avg_loss = sum(losses) / len(losses)
+        #     losses.append(loss.item())
+        # avg_loss = sum(losses) / len(losses)
         
         top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(
             model, dataloader_test)
