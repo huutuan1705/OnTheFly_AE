@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.utils.data as data
 import torch.nn.functional as F
-import torch, numpy as np, matplotlib.pyplot as plt
+
 from tqdm import tqdm
 from torch import optim
 from baseline.datasets import FGSBIR_Dataset
@@ -13,72 +13,6 @@ from baseline.utils import loss_fn
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-@torch.no_grad()
-def uniformity(x: torch.Tensor, t: float = 2.0):
-    sim = x @ x.T                         # cosine sim
-    N = x.size(0)
-    mask = ~torch.eye(N, dtype=torch.bool, device=x.device)
-    sqdist = (2 - 2 * sim)[mask]          # ||u-v||^2 = 2 - 2cos(u,v)
-    return torch.log(torch.exp(-t * sqdist).mean()).item()
-
-def pca_2d_numpy(x: np.ndarray):
-    X = x - x.mean(axis=0, keepdims=True)
-    _, _, Vt = np.linalg.svd(X, full_matrices=False)
-    return X @ Vt[:2].T
-
-def pool_sketch_list(sketch_list, mode="mean", device=None):
-    pooled = []
-    for s in sketch_list:
-        s = s.to(device) if device is not None else s
-        if mode == "mean":
-            v = s.mean(dim=0)             # (64,)
-        elif mode == "max":
-            v, _ = s.max(dim=0)           # (64,)
-        else:
-            raise ValueError("mode should be 'mean' or 'max'")
-        pooled.append(v.unsqueeze(0))
-    return torch.cat(pooled, dim=0)
-
-def visualize_uniformity_scatter(sketch_list, photo_features,
-                                 pool="mean", t=2.0, save_path=None):
-    """
-    sketch_list: list of (20,64)
-    photo_features: (N,64)
-    """
-    device = photo_features.device if isinstance(photo_features, torch.Tensor) else None
-
-    # (a) Sketch -> (M,64)
-    S = pool_sketch_list(sketch_list, mode=pool, device=device)
-    # (b) Photo -> (N,64) (đảm bảo tensor)
-    P = photo_features if isinstance(photo_features, torch.Tensor) else torch.as_tensor(photo_features)
-
-    # (c) Uniformity (tính trên không gian gốc, trước PCA)
-    u_s = uniformity(S, t=t)
-    u_p = uniformity(P, t=t)
-    u_joint = uniformity(torch.cat([S, P], dim=0), t=t)
-
-    print(f"[Uniformity] sketch={u_s:.4f}  photo={u_p:.4f}  joint={u_joint:.4f}  (t={t}, pool={pool})")
-
-    # (d) PCA 2D - convert 64D to 2D
-    X = torch.cat([S, P], dim=0).cpu().numpy()
-    Z = pca_2d_numpy(X)
-    M = S.size(0)
-    Zs, Zp = Z[:M], Z[M:]
-
-    # (e) Scatter + box
-    plt.figure(figsize=(6,6))
-    plt.scatter(Zs[:,0], Zs[:,1], s=10, marker='o', alpha=0.7, label=f'Sketch ({pool})')
-    plt.scatter(Zp[:,0], Zp[:,1], s=14, marker='x', alpha=0.8, label='Photo')
-    plt.title("Uniformity view — PCA 2D")
-    plt.xlabel("PC1"); plt.ylabel("PC2"); plt.legend(loc='best')
-    txt = f"Uniformity (t={t}):\n  sketch = {u_s:.4f}\n  photo  = {u_p:.4f}\n  joint  = {u_joint:.4f}"
-    plt.gcf().text(0.02, 0.02, txt, fontsize=9, ha='left', va='bottom',
-                   bbox=dict(boxstyle="round", alpha=0.2))
-    plt.tight_layout()
-    if save_path:
-        plt.savefig(save_path, dpi=180)
-    plt.show()
-    
 def get_dataloader(args):
     dataset_train = FGSBIR_Dataset(args, mode='train')
     dataloader_train = data.DataLoader(
@@ -121,9 +55,9 @@ def evaluate_model(model, dataloader_test):
                 image_names.extend(batch['positive_path'])
                 
         # print("image_array_tests shape", image_array_tests.shape)
-        # print("sketch_array_tests len", len(sketch_array_tests))
-        # print("sketch_array_tests[0] shape", sketch_array_tests[0].shape) #(25, 2048)
-        visualize_uniformity_scatter(sketch_list=sketch_array_tests, photo_features=image_array_tests)
+        # print("image_array_tests shape", image_array_tests.shape)
+        # print("sketch_array_tests shape", sketch_array_tests[0].shape) #(25, 2048)
+        
         num_steps = len(sketch_array_tests[0])
         avererage_area = []
         avererage_area_percentile = []
@@ -201,18 +135,18 @@ def train_model(model, args):
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
                 
-        # losses = []
-        # for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
-        #     model.train()
-        #     optimizer.zero_grad()
+        losses = []
+        for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
+            model.train()
+            optimizer.zero_grad()
 
-        #     features = model(batch_data)
-        #     loss = loss_fn(args, features)
-        #     loss.backward()
-        #     optimizer.step()
+            features = model(batch_data)
+            loss = loss_fn(args, features)
+            loss.backward()
+            optimizer.step()
 
-        #     losses.append(loss.item())
-        # avg_loss = sum(losses) / len(losses)
+            losses.append(loss.item())
+        avg_loss = sum(losses) / len(losses)
         
         top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(
             model, dataloader_test)
