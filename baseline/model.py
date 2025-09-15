@@ -12,11 +12,11 @@ class Siamese_SBIR(nn.Module):
         self.args = args
         self.sample_embedding_network = InceptionV3(args=args)
         self.attention = SelfAttention(args)
-        self.linear = Linear_global(feature_num=64)
+        self.linear = Linear_global(feature_num=self.args.output_size)
         
         self.sketch_embedding_network = InceptionV3(args=args)
         self.sketch_attention = SelfAttention(args)
-        self.sketch_linear = Linear_global(feature_num=64)
+        self.sketch_linear = Linear_global(feature_num=self.args.output_size)
 
         def init_weights(m):
             if type(m) == nn.Linear:
@@ -34,9 +34,9 @@ class Siamese_SBIR(nn.Module):
         positive_img = batch[f'positive_img_{num}'].to(device)
         negative_img = batch[f'negative_img_{num}'].to(device)
         
-        positive_feature, fm_6b_pos = self.sample_embedding_network(positive_img)
+        positive_feature, _ = self.sample_embedding_network(positive_img)
         negative_feature, _ = self.sample_embedding_network(negative_img)
-        sketch_feature, fm_6b_ske = self.sketch_embedding_network(sketch_img)
+        sketch_feature, _ = self.sketch_embedding_network(sketch_img)
         
         positive_feature = self.attention(positive_feature)
         negative_feature = self.attention(negative_feature)
@@ -46,22 +46,16 @@ class Siamese_SBIR(nn.Module):
         negative_feature = self.linear(negative_feature)
         sketch_feature = self.sketch_linear(sketch_feature)
         
-        fm_6bs = {
-            "fm_6b_pos": fm_6b_pos,
-            "fm_6b_ske": fm_6b_ske
-        }
-        
-        return sketch_feature, positive_feature, negative_feature, fm_6bs
+        return sketch_feature, positive_feature, negative_feature
     
     def forward(self, batch):
-        sketch_feature_1, positive_feature_1, negative_feature_1, fm_6bs_1 = self.extract_feature(batch=batch, num=1)
-        sketch_feature_2, positive_feature_2, negative_feature_2, fm_6bs_2 = self.extract_feature(batch=batch, num=2)
+        sketch_feature_1, positive_feature_1, negative_feature_1 = self.extract_feature(batch=batch, num=1)
+        sketch_feature_2, positive_feature_2, negative_feature_2 = self.extract_feature(batch=batch, num=2)
     
         
         return {
             'sketch_feature_1': sketch_feature_1, 'sketch_feature_2': sketch_feature_2,
             'positive_feature_1': positive_feature_1, 'positive_feature_2': positive_feature_2,
             'negative_feature_1': negative_feature_1, 'negative_feature_2': negative_feature_2,
-            'fm_6bs_1': fm_6bs_1, 'fm_6bs_2': fm_6bs_2
         }
     
