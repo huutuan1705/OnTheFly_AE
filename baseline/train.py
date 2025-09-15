@@ -153,21 +153,31 @@ def train_model(model, args):
             
         if top5_eval > top5:
             top5 = top5_eval
-            torch.save(model.state_dict(), os.path.join(args.save_dir, "best_top5_model.pth"))
+            torch.save(model.state_dict(), os.path.join(args.save_dir, args.dataset_name + '_best_top5.pth'))
             torch.save({
                         'sample_embedding_network': model.sample_embedding_network.state_dict(),
                         'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
-                    }, args.dataset_name + '_backbone.pth')
+                    }, args.dataset_name + '_top5_backbone.pth')
             torch.save({'attention': model.attention.state_dict(),
                             'sketch_attention': model.sketch_attention.state_dict(),
-                            }, args.dataset_name + '_attention.pth')
+                            }, args.dataset_name + '_top5_attention.pth')
             torch.save({'linear': model.linear.state_dict(),
                             'sketch_linear': model.sketch_linear.state_dict(),
-                            }, args.dataset_name + '_linear.pth')
+                            }, args.dataset_name + '_top5_linear.pth')
 
         if top10_eval > top10:
             top10 = top10_eval
-            torch.save(model.state_dict(), os.path.join(args.save_dir, "best_top10_model.pth"))
+            torch.save(model.state_dict(), os.path.join(args.save_dir, args.dataset_name + '_best_top10.pth'))
+            torch.save({
+                        'sample_embedding_network': model.sample_embedding_network.state_dict(),
+                        'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
+                    }, args.dataset_name + '_top10_backbone.pth')
+            torch.save({'attention': model.attention.state_dict(),
+                            'sketch_attention': model.sketch_attention.state_dict(),
+                            }, args.dataset_name + '_top10_attention.pth')
+            torch.save({'linear': model.linear.state_dict(),
+                            'sketch_linear': model.sketch_linear.state_dict(),
+                            }, args.dataset_name + '_top10_linear.pth')
             
         torch.save(model.state_dict(), os.path.join(args.save_dir, "last_model.pth"))
         
