@@ -16,14 +16,14 @@ if __name__ == "__main__":
     
     parsers.add_argument('--use_kaiming_init', type=bool, default=True)
     parsers.add_argument('--load_pretrained', type=bool, default=False)
-    parsers.add_argument('--stage2', type=bool, default=False)
+    parsers.add_argument('--use_info', type=bool, default=False)
     
-    parsers.add_argument('--batch_size', type=int, default=48)
+    parsers.add_argument('--batch_size', type=int, default=24)
     parsers.add_argument('--test_batch_size', type=int, default=1)
     parsers.add_argument('--step_size', type=int, default=100)
     parsers.add_argument('--gamma', type=float, default=0.5)
     parsers.add_argument('--margin', type=float, default=0.3)
-    parsers.add_argument('--alpha', type=float, default=0.4)
+    parsers.add_argument('--alpha', type=float, default=0.2)
     parsers.add_argument('--temperature', default=0.07, type=float, help='softmax temperature (default: 0.07)')
     parsers.add_argument('--threads', type=int, default=4)
     parsers.add_argument('--lr', type=float, default=0.0001)
