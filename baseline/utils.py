@@ -49,9 +49,9 @@ def loss_fn(args, features):
     infonce_cross = info_nce_loss(args=args, features_view1=sum_sketch_features, features_view2=sum_positive_features)
     triplet_loss = criterion(sum_sketch_features, sum_positive_features, sum_negative_feature)
     
-    total_loss = triplet_loss 
+    total_loss = args.alpha*triplet_loss 
     if args.use_info:
-        total_loss = total_loss + args.alpha*infonce_cross   
+        total_loss = total_loss + args.beta*infonce_cross   
     return total_loss
     
 def get_transform(type, aug_mode='geometric_strong'):
