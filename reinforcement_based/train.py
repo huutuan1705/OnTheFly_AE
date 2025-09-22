@@ -175,12 +175,12 @@ def train_model(model, args):
         model.policy_network.train()
         print(f"Epoch: {i_epoch+1} / {args.epochs}")     
         print(len(sketch_array_train))  
-        for i, sanpled_batch in enumerate(sketch_array_train):
+        for i, sanpled_batch in enumerate(tqdm(sketch_array_train)):
             entropies = []
             log_probs = []
             rewards = []
             avg_loss = 0
-            print(sanpled_batch.shape)
+            
             for i_sketch in range(sanpled_batch.shape[0]):
                 action_mean, sketch_anchor_embedding, log_prob, entropy = \
                         model.policy_network.select_action(sanpled_batch[i_sketch].unsqueeze(0).to(device))
@@ -193,7 +193,7 @@ def train_model(model, args):
                 
             loss_single = model.calculate_loss(log_probs, rewards)
             loss_buffer.append(loss_single)
-            
+            print(i+1)
             if (i+1)%64 == 0:
                 optimizer.zero_grad()
                 policy_loss = torch.stack(loss_buffer).mean()
