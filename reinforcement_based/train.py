@@ -170,7 +170,7 @@ def train_model(model, args):
             positive_feature = model.linear(model.attention(positive_feature))
             image_array_train = torch.cat((image_array_train, positive_feature))
             image_names_train.extend(batch_data['positive_path'])
-    
+            
     for i_epoch in range(args.epochs):
         model.policy_network.train()
         print(f"Epoch: {i_epoch+1} / {args.epochs}")       
@@ -191,8 +191,7 @@ def train_model(model, args):
                 
             loss_single = model.calculate_loss(log_probs, rewards)
             loss_buffer.append(loss_single)
-            print(i+1)
-            if (i+1)%args.batch_size == 0:
+            if (i+1)%64 == 0:
                 optimizer.zero_grad()
                 policy_loss = torch.stack(loss_buffer).mean()
                 print(policy_loss)
