@@ -197,7 +197,7 @@ def train_model(model, args):
             if (i+1)%64 == 0:
                 optimizer.zero_grad()
                 policy_loss = torch.stack(loss_buffer).mean()
-                losses.append(policy_loss.item)
+                losses.append(policy_loss.item())
                 policy_loss.backward()
                 optimizer.step()
                 loss_buffer = []
