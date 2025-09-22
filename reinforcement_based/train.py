@@ -122,8 +122,7 @@ def evaluate_model(model, dataloader_test):
 def get_reward(action, sketch_name, image_names_train, image_array_train):
         sketch_query_name = '_'.join(sketch_name.split('/')[-1].split('_')[:-1])
         position_query = image_names_train.index(sketch_query_name)
-        target_distance = F.pairwise_distance(F.normalize(action),
-                                              image_array_train[position_query])
+        target_distance = F.pairwise_distance(F.normalize(action), image_array_train[position_query])
         distance = F.pairwise_distance(F.normalize(action), image_array_train)
         rank = distance.le(target_distance).sum()
 
@@ -196,6 +195,7 @@ def train_model(model, args):
             if (i+1)%args.batch_size == 0:
                 optimizer.zero_grad()
                 policy_loss = torch.stack(loss_buffer).mean()
+                print(policy_loss)
                 avg_loss = policy_loss.item()
                 policy_loss.backward()
                 optimizer.step()
