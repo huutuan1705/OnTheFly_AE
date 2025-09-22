@@ -174,7 +174,7 @@ def train_model(model, args):
     for i_epoch in range(args.epochs):
         model.policy_network.train()
         print(f"Epoch: {i_epoch+1} / {args.epochs}")       
-        for i, sanpled_batch in enumerate(tqdm(sketch_array_train)):
+        for i, sanpled_batch in enumerate(sketch_array_train):
             entropies = []
             log_probs = []
             rewards = []
@@ -191,7 +191,7 @@ def train_model(model, args):
                 
             loss_single = model.calculate_loss(log_probs, rewards)
             loss_buffer.append(loss_single)
-            if (i+1)%args.batch_size == 0: print('YES')
+            print(i+1)
             if (i+1)%args.batch_size == 0:
                 optimizer.zero_grad()
                 policy_loss = torch.stack(loss_buffer).mean()
