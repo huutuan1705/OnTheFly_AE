@@ -170,7 +170,8 @@ def train_model(model, args):
             positive_feature = model.linear(model.attention(positive_feature))
             image_array_train = torch.cat((image_array_train, positive_feature))
             image_names_train.extend(batch_data['positive_path'])
-            
+    
+    losses = []        
     for i_epoch in range(args.epochs):
         model.policy_network.train()
         print(f"Epoch: {i_epoch+1} / {args.epochs}")     
@@ -179,7 +180,6 @@ def train_model(model, args):
             entropies = []
             log_probs = []
             rewards = []
-            avg_loss = 0
             
             for i_sketch in range(sanpled_batch.shape[0]):
                 action_mean, sketch_anchor_embedding, log_prob, entropy = \
@@ -197,7 +197,7 @@ def train_model(model, args):
             if (i+1)%64 == 0:
                 optimizer.zero_grad()
                 policy_loss = torch.stack(loss_buffer).mean()
-                avg_loss = policy_loss.item()
+                losses.append(policy_loss.item)
                 policy_loss.backward()
                 optimizer.step()
                 loss_buffer = []
@@ -209,7 +209,7 @@ def train_model(model, args):
         if top10_eval > top10:
             top10 = top10_eval
             torch.save(model.state_dict(), "best_top10_model.pth")
-            
+        avg_loss = sum(losses) / len(losses)  
         torch.save(model.state_dict(), "last_model.pth")
         print('Top 1 accuracy : {:.5f}'.format(top1_eval))
         print('Top 5 accuracy : {:.5f}'.format(top5_eval))
