@@ -33,9 +33,9 @@ if __name__ == "__main__":
     model = Siamese_SBIR(args).to(device)
     
     if args.load_pretrained is False:
-        backbones_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top5_backbone.pth", weights_only=True)
-        attention_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top5_attention.pth", weights_only=True)
-        linear_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top5_linear.pth", weights_only=True)
+        backbones_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top10_backbone.pth", weights_only=True)
+        attention_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top10_attention.pth", weights_only=True)
+        linear_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top10_linear.pth", weights_only=True)
 
         model.sample_embedding_network.load_state_dict(backbones_state['sample_embedding_network'], strict=False)
         model.attention.load_state_dict(attention_state['attention'], strict=False)
