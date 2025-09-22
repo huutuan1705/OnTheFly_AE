@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from torch import optim
 import torch.nn.utils as utils
-from stage_2.datasets import FGSBIR_Dataset
+from test_model.datasets import FGSBIR_Dataset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
