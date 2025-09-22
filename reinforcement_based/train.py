@@ -180,6 +180,7 @@ def train_model(model, args):
             log_probs = []
             rewards = []
             avg_loss = 0
+            print(sanpled_batch.shape)
             for i_sketch in range(sanpled_batch.shape[0]):
                 action_mean, sketch_anchor_embedding, log_prob, entropy = \
                         model.policy_network.select_action(sanpled_batch[i_sketch].unsqueeze(0).to(device))
