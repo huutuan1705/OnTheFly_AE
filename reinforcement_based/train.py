@@ -191,7 +191,7 @@ def train_model(model, args):
                 
             loss_single = model.calculate_loss(log_probs, rewards)
             loss_buffer.append(loss_single)
-            
+            if (i+1)%args.batch_size == 0: print('YES')
             if (i+1)%args.batch_size == 0:
                 optimizer.zero_grad()
                 policy_loss = torch.stack(loss_buffer).mean()
@@ -200,7 +200,7 @@ def train_model(model, args):
                 policy_loss.backward()
                 optimizer.step()
                 loss_buffer = []
-            print(avg_loss)  
+              
         top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(model=model, dataloader_test=dataloader_test)
         if top5_eval > top5:
             top5 = top5_eval
