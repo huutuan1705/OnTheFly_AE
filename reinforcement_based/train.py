@@ -82,14 +82,14 @@ def evaluate_model(model, dataloader_test):
             sketch_query_name = '_'.join(
                 sketch_name.split('/')[-1].split('_')[:-1])
             position_query = image_names.index(sketch_query_name)
-            sketch_features = model.attn(sampled_batch)
-            # sketch_features = sampled_batch
+            # sketch_features = model.attn(sampled_batch)
+            sketch_features = sampled_batch
 
             for i_sketch in range(sampled_batch.shape[0]):
                 # print("sketch_features[i_sketch].shape: ", sketch_features[i_sketch].shape)
-                sketch_feature = sketch_features[i_sketch]
+                _, sketch_feature, _, _ = model.policy_network.select_action(sketch_features[i_sketch].unsqueeze(0).to(device))
                 target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
-                distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
+                distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests.to(device))
                 
                 rank_all[i_batch, i_sketch] = distance.le(target_distance).sum()
                 rank_all_percentile[i_batch, i_sketch] = (len(distance) - rank_all[i_batch, i_sketch]) / (len(distance) - 1)
@@ -119,6 +119,20 @@ def evaluate_model(model, dataloader_test):
 
         return top1_accuracy, top5_accuracy, top10_accuracy, meanMA, meanMB, meanOurA, meanOurB
 
+def get_reward(action, sketch_name, image_names_train, image_array_train):
+        sketch_query_name = '_'.join(sketch_name.split('/')[-1].split('_')[:-1])
+        position_query = image_names_train.index(sketch_query_name)
+        target_distance = F.pairwise_distance(F.normalize(action),
+                                              image_array_train[position_query])
+        distance = F.pairwise_distance(F.normalize(action), image_array_train)
+        rank = distance.le(target_distance).sum()
+
+        if rank.item() == 0:
+            reward = 1.
+        else:
+            reward = 1. / rank.item()
+        return reward
+    
 def train_model(model, args):
     model = model.to(device)
     dataloader_train, dataloader_test = get_dataloader(args)
@@ -129,22 +143,81 @@ def train_model(model, args):
         # {'params': model.sketch_linear.parameters(), 'lr': args.lr},
         {'params': model.policy_network.parameters(), 'lr': args.lr},
     ])
-      
+    
+    model.sketch_embedding_network.eval()
+    model.sample_embedding_network.eval()
+    model.sketch_attention.eval()
+    model.attention.eval()
+    model.linear.eval()
+    
+
+    sketch_names_train = []
+    image_array_train = torch.FloatTensor().to(device)
+    image_names_train = []
+    sketch_array_train = []
+    loss_buffer = []
+       
     for _, batch_data in enumerate(tqdm(dataloader_train)):
-            model.sketch_embedding_network.eval()
-            model.sample_embedding_network.eval()
-            model.sketch_attention.eval()
-            model.attention.eval()
-            model.linear.eval()
-            model.policy_network.train()
-            # model.sketch_linear.train()
-            optimizer.zero_grad()
+        sketch_features_all = torch.FloatTensor().to(device)
+        for data_sketch in batch_data['sketch_imgs']:
+            sketch_feature, _ = model.sketch_embedding_network(data_sketch.to(device))
+            sketch_feature = model.sketch_attention(sketch_feature)
+            sketch_features_all = torch.cat((sketch_features_all, sketch_feature.detach()))
+        sketch_array_train.append(sketch_features_all)
+        sketch_names_train.extend(batch_data['sketch_path'])
+        
+        if batch_data['positive_path'][0] not in image_names_train:
+            positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'].to(device))
+            positive_feature = model.linear(model.attention(positive_feature))
+            image_array_train = torch.cat((image_array_train, positive_feature))
+            image_names_train.extend(batch_data['positive_path'])
+    
+    for i_epoch in range(args.epochs):
+        model.policy_network.train()
+        print(f"Epoch: {i_epoch+1} / {args.epochs}")       
+        for i, sanpled_batch in enumerate(sketch_array_train):
+            entropies = []
+            log_probs = []
+            rewards = []
+            avg_loss = 0
+            for i_sketch in range(sanpled_batch.shape[0]):
+                action_mean, sketch_anchor_embedding, log_prob, entropy = \
+                        model.policy_network.select_action(sanpled_batch[i_sketch].unsqueeze(0).to(device))
+                        
+                reward = get_reward(sketch_anchor_embedding, sketch_names_train[i], image_names_train, image_array_train)
+
+                entropies.append(entropy)
+                log_probs.append(log_prob)
+                rewards.append(reward)
+                
+            loss_single = model.calculate_loss(log_probs, rewards, entropies)
+            loss_buffer.append(loss_single)
             
-            for idx in range(len(batch_data['sketch_imgs'])):
-                sketch_seq_feature, _ = model.sketch_embedding_network(batch_data['sketch_imgs'][idx].to(device))
-                sketch_seq_feature = model.sketch_attention(sketch_seq_feature)
-                for i_sketch in range(sketch_seq_feature.shape[0]):
-                    action_mean, sketch_anchor_embedding, log_prob, entropy = \
-                        model.policy_network.select_action(sketch_seq_feature[i_sketch].unsqueeze(0).to(device))
-                    
-                    reward = model.get_reward(sketch_anchor_embedding)
+            if (i+1)%args.batch_size == 0:
+                optimizer.zero_grad()
+                policy_loss = torch.stack(loss_buffer).mean()
+                avg_loss = policy_loss.item()
+                policy_loss.backward()
+                optimizer.step()
+                loss_buffer = []
+                
+        top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(model=model, dataloader_test=dataloader_test)
+        if top5_eval > top5:
+            top5 = top5_eval
+            torch.save(model.state_dict(), "best_top5_model.pth")
+        if top10_eval > top10:
+            top10 = top10_eval
+            torch.save(model.state_dict(), "best_top10_model.pth")
+            
+        torch.save(model.state_dict(), "last_model.pth")
+        print('Top 1 accuracy : {:.5f}'.format(top1_eval))
+        print('Top 5 accuracy : {:.5f}'.format(top5_eval))
+        print('Top 10 accuracy: {:.5f}'.format(top10_eval))
+        print('Mean A         : {:.5f}'.format(meanA))
+        print('Mean B         : {:.5f}'.format(meanB))
+        print('meanOurA       : {:.5f}'.format(meanOurA))
+        print('meanOurB       : {:.5f}'.format(meanOurB))
+        print('Loss           : {:.5f}'.format(avg_loss))
+        with open("results_log.txt", "a") as f:
+            f.write("Epoch {:d} | Top1: {:.5f} | Top5: {:.5f} | Top10: {:.5f} | MeanA: {:.5f} | MeanB: {:.5f} | meanOurA: {:.5f} | meanOurB: {:.5f} \n".format(
+                i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB))
