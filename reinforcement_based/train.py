@@ -200,7 +200,7 @@ def train_model(model, args):
                 policy_loss.backward()
                 optimizer.step()
                 loss_buffer = []
-                
+            print(avg_loss)  
         top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(model=model, dataloader_test=dataloader_test)
         if top5_eval > top5:
             top5 = top5_eval
