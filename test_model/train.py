@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import torch
 import torch.nn as nn
@@ -6,10 +7,11 @@ import torch.nn.functional as F
 
 from tqdm import tqdm
 from torch import optim
-import torch.nn.utils as utils
 from test_model.datasets import FGSBIR_Dataset
+from test_model.utils import loss_fn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def get_dataloader(args):
     dataset_train = FGSBIR_Dataset(args, mode='train')
@@ -21,7 +23,7 @@ def get_dataloader(args):
         dataset_test, batch_size=args.test_batch_size, shuffle=False, num_workers=int(args.threads))
 
     return dataloader_train, dataloader_test
-
+    
 def evaluate_model(model, dataloader_test):
     with torch.no_grad():
         model.eval()
@@ -37,30 +39,25 @@ def evaluate_model(model, dataloader_test):
             for data_sketch in batch['sketch_imgs']:
                 sketch_feature, _ = model.sketch_embedding_network(
                     data_sketch.to(device))
-                sketch_feature = model.sketch_linear(model.sketch_attention(sketch_feature)) 
-                # sketch_feature, _ = model.sketch_attention(
-                #     model.sketch_embedding_network(data_sketch.to(device))
-                # )
-                # print("sketch_feature.shape: ", sketch_feature.shape) #(25, 2048)
-                sketch_features_all = torch.cat(
-                    (sketch_features_all, sketch_feature.detach()))
+                sketch_feature = model.sketch_linear(model.sketch_attention(sketch_feature)) #(25, 2048)
+                
+                sketch_features_all = torch.cat((sketch_features_all, sketch_feature.detach()))
 
             # print("sketch_feature_ALL.shape: ", sketch_features_all.shape) # (25, 2048)
-            sketch_array_tests.append(sketch_features_all)
+            sketch_array_tests.append(sketch_features_all.cpu())
             sketch_names.extend(batch['sketch_path'])
 
             if batch['positive_path'][0] not in image_names:
-                positive_feature, _ = model.sample_embedding_network(
-                    batch['positive_img'].to(device))
-                positive_feature = model.linear(
-                    model.attention(positive_feature))
-                # positive_feature, _ = model.attention(
-                #     model.sample_embedding_network(batch['positive_img'].to(device)))
-                image_array_tests = torch.cat(
-                    (image_array_tests, positive_feature))
+                positive_feature, _ = model.sample_embedding_network(batch['positive_img'].to(device))
+                positive_feature = model.linear(model.attention(positive_feature))
+                
+                image_array_tests = torch.cat((image_array_tests, positive_feature))
                 image_names.extend(batch['positive_path'])
-
-        # print("sketch_array_tests[0].shape", sketch_array_tests[0].shape) #(25, 2048)
+                
+        # print("image_array_tests shape", image_array_tests.shape)
+        # print("image_array_tests shape", image_array_tests.shape)
+        # print("sketch_array_tests shape", sketch_array_tests[0].shape) #(25, 2048)
+        
         num_steps = len(sketch_array_tests[0])
         avererage_area = []
         avererage_area_percentile = []
@@ -81,13 +78,11 @@ def evaluate_model(model, dataloader_test):
             mean_rank_percentile = []
             sketch_name = sketch_names[i_batch]
 
-            sketch_query_name = '_'.join(
-                sketch_name.split('/')[-1].split('_')[:-1])
+            sketch_query_name = '_'.join(sketch_name.split('/')[-1].split('_')[:-1])
             position_query = image_names.index(sketch_query_name)
             sketch_features = sampled_batch
 
             for i_sketch in range(sampled_batch.shape[0]):
-                # print("sketch_features[i_sketch].shape: ", sketch_features[i_sketch].shape)
                 sketch_feature = sketch_features[i_sketch]
                 target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
                 distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
@@ -120,80 +115,73 @@ def evaluate_model(model, dataloader_test):
 
         return top1_accuracy, top5_accuracy, top10_accuracy, meanMA, meanMB, meanOurA, meanOurB
 
+
 def train_model(model, args):
     model = model.to(device)
     dataloader_train, dataloader_test = get_dataloader(args)
     if args.load_pretrained:
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
 
-    loss_fn = nn.TripletMarginLoss(margin=args.margin)
-    # optimizer = optim.Adam(params=model.parameters(), lr=args.lr)
+    lr = args.lr
+    # loss_fn = nn.TripletMarginLoss(margin=args.margin)
+    # optimizer = optim.Adam(params=model.parameters(), lr=lr)
     optimizer = optim.AdamW([
-        {'params': model.sketch_linear.parameters(), 'lr': args.lr},
+        {'params': model.sample_embedding_network.parameters(), 'lr': lr},
+        {'params': model.sketch_embedding_network.parameters(), 'lr': lr},
     ])
     # scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
 
     top5, top10, avg_loss = 0, 0, 0
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
-
+                
         losses = []
-        for _, batch_data in enumerate(tqdm(dataloader_train)):
-            model.sketch_embedding_network.eval()
-            model.sample_embedding_network.eval()
-            model.sketch_attention.eval()
-            model.attention.eval()
-            model.linear.eval()
-            model.sketch_linear.train()
+        for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
+            model.train()
             optimizer.zero_grad()
 
-            loss = 0
-            for idx in range(len(batch_data['sketch_imgs_1'])): # len(batch_data['sketch_imgs']) = batch_size
-                sketch_seq_feature_1, _ = model.sketch_embedding_network(batch_data['sketch_imgs_1'][idx].to(device))
-                sketch_seq_feature_2, _ = model.sketch_embedding_network(batch_data['sketch_imgs_2'][idx].to(device))
-                
-                positive_feature_1, _ = model.sample_embedding_network(batch_data['positive_img_1'][idx].unsqueeze(0).to(device))
-                negative_feature_1, _ = model.sample_embedding_network(batch_data['negative_img_1'][idx].unsqueeze(0).to(device))
-                
-                positive_feature_2, _ = model.sample_embedding_network(batch_data['positive_img_2'][idx].unsqueeze(0).to(device))
-                negative_feature_2, _ = model.sample_embedding_network(batch_data['negative_img_2'][idx].unsqueeze(0).to(device))
-                
-                sketch_seq_feature_1 = model.sketch_linear(model.sketch_attention(sketch_seq_feature_1)) # (25, 64)
-                sketch_seq_feature_2 = model.sketch_linear(model.sketch_attention(sketch_seq_feature_2))
-                
-                positive_feature_1 = model.linear(model.attention(positive_feature_1)) # (1, 64)
-                negative_feature_1 = model.linear(model.attention(negative_feature_1))
-                
-                positive_feature_2 = model.linear(model.attention(positive_feature_2))
-                negative_feature_2 = model.linear(model.attention(negative_feature_2))
-                
-                positive_feature_1 = positive_feature_1.repeat(sketch_seq_feature_1.shape[0], 1)
-                negative_feature_1 = negative_feature_1.repeat(sketch_seq_feature_1.shape[0], 1)
-                positive_feature_2 = positive_feature_2.repeat(sketch_seq_feature_2.shape[0], 1)
-                negative_feature_2 = negative_feature_2.repeat(sketch_seq_feature_2.shape[0], 1)
-                
-                sum_sketch_features = torch.cat([z for z in [sketch_seq_feature_1, sketch_seq_feature_2]], dim=0)
-                sum_positive_features = torch.cat([z for z in [positive_feature_1, positive_feature_2]], dim=0)
-                sum_negative_feature = torch.cat([z for z in [negative_feature_1, negative_feature_2]], dim=0)
-                loss += loss_fn(sum_sketch_features, sum_positive_features, sum_negative_feature)      
-            
+            features = model(batch_data)
+            loss = loss_fn(args, features)
             loss.backward()
             optimizer.step()
-            # scheduler.step()
 
             losses.append(loss.item())
-
         avg_loss = sum(losses) / len(losses)
-                
-        top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(model=model, dataloader_test=dataloader_test)
+        
+        top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(
+            model, dataloader_test)
+            
         if top5_eval > top5:
             top5 = top5_eval
-            torch.save(model.state_dict(), "best_top5_model.pth")
+            torch.save(model.state_dict(), os.path.join(args.save_dir, args.dataset_name + '_best_top5.pth'))
+            torch.save({
+                        'sample_embedding_network': model.sample_embedding_network.state_dict(),
+                        'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
+                    }, args.dataset_name + '_top5_backbone.pth')
+            torch.save({'attention': model.attention.state_dict(),
+                            'sketch_attention': model.sketch_attention.state_dict(),
+                            }, args.dataset_name + '_top5_attention.pth')
+            torch.save({'linear': model.linear.state_dict(),
+                            'sketch_linear': model.sketch_linear.state_dict(),
+                            }, args.dataset_name + '_top5_linear.pth')
+
         if top10_eval > top10:
             top10 = top10_eval
-            torch.save(model.state_dict(), "best_top10_model.pth")
+            torch.save(model.state_dict(), os.path.join(args.save_dir, args.dataset_name + '_best_top10.pth'))
+            torch.save({
+                        'sample_embedding_network': model.sample_embedding_network.state_dict(),
+                        'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
+                    }, args.dataset_name + '_top10_backbone.pth')
+            torch.save({'attention': model.attention.state_dict(),
+                            'sketch_attention': model.sketch_attention.state_dict(),
+                            }, args.dataset_name + '_top10_attention.pth')
+            torch.save({'linear': model.linear.state_dict(),
+                            'sketch_linear': model.sketch_linear.state_dict(),
+                            }, args.dataset_name + '_top10_linear.pth')
             
-        torch.save(model.state_dict(), "last_model.pth")
+        torch.save(model.state_dict(), os.path.join(args.save_dir, "last_model.pth"))
+        
+        
         print('Top 1 accuracy : {:.5f}'.format(top1_eval))
         print('Top 5 accuracy : {:.5f}'.format(top5_eval))
         print('Top 10 accuracy: {:.5f}'.format(top10_eval))
@@ -201,8 +189,8 @@ def train_model(model, args):
         print('Mean B         : {:.5f}'.format(meanB))
         print('meanOurA       : {:.5f}'.format(meanOurA))
         print('meanOurB       : {:.5f}'.format(meanOurB))
-        print('Loss           : {:.5f}'.format(avg_loss))
-        with open("results_log.txt", "a") as f:
-            f.write("Epoch {:d} | Top1: {:.5f} | Top5: {:.5f} | Top10: {:.5f} | MeanA: {:.5f} | MeanB: {:.5f} | meanOurA: {:.5f} | meanOurB: {:.5f} \n".format(
-                i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB))
-            
+        print('Loss:            {:.5f}'.format(avg_loss))
+        
+        with open(os.path.join(args.save_dir, "results_log_2.txt"), "a") as f:
+            f.write("Epoch {:d} | Top1: {:.5f} | Top5: {:.5f} | Top10: {:.5f} | MeanA: {:.5f} | MeanB: {:.5f} | meanOurA: {:.5f} | meanOurB: {:.5f} | Loss: {:.5f}\n".format(
+                i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB, avg_loss))
