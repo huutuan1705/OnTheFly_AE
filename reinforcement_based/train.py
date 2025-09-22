@@ -143,7 +143,7 @@ def train_model(model, args):
         # {'params': model.sketch_linear.parameters(), 'lr': args.lr},
         {'params': model.policy_network.parameters(), 'lr': args.lr},
     ])
-    
+    top5, top10, avg_loss = 0, 0, 0
     model.sketch_embedding_network.eval()
     model.sample_embedding_network.eval()
     model.sketch_attention.eval()
