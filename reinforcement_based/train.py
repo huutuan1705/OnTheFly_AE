@@ -193,7 +193,7 @@ def train_model(model, args):
                 
             loss_single = model.calculate_loss(log_probs, rewards)
             loss_buffer.append(loss_single)
-            print(i+1)
+            
             if (i+1)%64 == 0:
                 optimizer.zero_grad()
                 policy_loss = torch.stack(loss_buffer).mean()
