@@ -190,7 +190,7 @@ def train_model(model, args):
                 log_probs.append(log_prob)
                 rewards.append(reward)
                 
-            loss_single = model.calculate_loss(log_probs, rewards, entropies)
+            loss_single = model.calculate_loss(log_probs, rewards)
             loss_buffer.append(loss_single)
             
             if (i+1)%args.batch_size == 0:
