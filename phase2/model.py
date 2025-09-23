@@ -26,7 +26,7 @@ class SketchAttention(nn.Module):
         attn = F.normalize(attn)
         
         output = self.proj(attn)
-        return F.normalize(att_out)
+        return F.normalize(output)
 
 class Siamese_SBIR(nn.Module):
     def __init__(self, args):
