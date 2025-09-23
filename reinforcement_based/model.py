@@ -63,10 +63,12 @@ class RL_based(nn.Module):
             reward = 1. / rank.item()
         return reward
        
-    def calculate_loss(self, log_probs, rewards):
+    def calculate_loss(self, log_probs, rewards, entropies):
         loss = 0
+        gamma = 0.9
         for i in reversed(range(len(rewards))):
-            R =  rewards[i]
-            loss = loss - log_probs[i] * R 
+            R = gamma ** (len(rewards) - i -1) * rewards[i]
+            # R =  rewards[i] # Flat Reward
+            loss = loss - log_probs[i] * R - 0.0001 * entropies[i]
         loss = loss / len(rewards)
         return loss
