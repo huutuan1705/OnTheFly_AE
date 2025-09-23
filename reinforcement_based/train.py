@@ -150,10 +150,11 @@ def train_model(model, args):
     model.linear.eval()
     
 
-    sketch_names_train = []
     image_array_train = torch.FloatTensor().to(device)
-    image_names_train = []
     sketch_array_train = []
+    image_names_train = []
+    sketch_names_train = []
+    
     loss_buffer = []
        
     for _, batch_data in enumerate(tqdm(dataloader_train)):
@@ -168,7 +169,7 @@ def train_model(model, args):
         if batch_data['positive_path'][0] not in image_names_train:
             positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'].to(device))
             positive_feature = model.linear(model.attention(positive_feature))
-            image_array_train = torch.cat((image_array_train, positive_feature))
+            image_array_train = torch.cat((image_array_train, positive_feature.detach()))
             image_names_train.extend(batch_data['positive_path'])
     
     losses = []        
