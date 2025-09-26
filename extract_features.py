@@ -81,13 +81,17 @@ class Environtment():
                 rgb_feature = linear(attention(sample_embedding_network(sample_batch['positive_img'])))
                 self.image_array_test = torch.cat((self.image_array_test, rgb_feature.detach()))
                 self.image_name_test.extend(sample_batch['positive_path'])
-                
-        with open("train_chair.pickle", "wb") as f:
+        
+        train_pickle = "train_" + args.dataset_name + ".pickle"    
+        test_pickle = "test_" + args.dataset_name + ".pickle"    
+        with open(train_pickle, "wb") as f:
             pickle.dump((self.image_array_train, self.sketch_array_train, self.image_name_train, self.sketch_name_train), f)
-
-        with open("test_chair.pickle", "wb") as f:
+        print("Extract training feature done")
+        
+        with open(test_pickle, "wb") as f:
             pickle.dump((self.image_array_test, self.sketch_array_test, self.image_name_test, self.sketch_name_test), f)
-            
+        print("Extract testing feature done")
+        
 if __name__ == "__main__":
     parsers = argparse.ArgumentParser(description='Baseline Fine-Grained SBIR model')
     parsers.add_argument('--dataset_name', type=str, default='ShoeV2')
@@ -96,3 +100,5 @@ if __name__ == "__main__":
     parsers.add_argument('--test_batch_size', type=int, default=1)
     parsers.add_argument('--num_heads', type=int, default=8)
     
+    args = parsers.parse_args()
+    envi = Environtment(args)
