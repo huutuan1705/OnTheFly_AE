@@ -12,9 +12,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class Environtment():
     def __init__(self, args):
-        backbones_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top10_backbone.pth", weights_only=True)
-        attention_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top10_attention.pth", weights_only=True)
-        linear_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top10_linear.pth", weights_only=True)
+        backbones_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_backbone.pth", weights_only=True)
+        attention_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_attention.pth", weights_only=True)
+        linear_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_linear.pth", weights_only=True)
 
         sample_embedding_network = InceptionV3(args)
         sample_embedding_network.to(device)
