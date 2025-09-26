@@ -34,7 +34,7 @@ def evaluate_model(model, dataloader_test):
             # print(batch['sketch_imgs'].shape) # (1, 25, 3, 299, 299)
             
             for data_sketch in batch['sketch_imgs']:
-                sketch_feature, _ = model.sketch_embedding_network(
+                sketch_feature = model.sketch_embedding_network(
                     data_sketch.to(device))
                 sketch_feature = model.sketch_attention(sketch_feature)
                 # sketch_feature = model.sketch_linear(sketch_feature)
@@ -48,11 +48,11 @@ def evaluate_model(model, dataloader_test):
             sketch_names.extend(batch['sketch_path'])
 
             if batch['positive_path'][0] not in image_names:
-                positive_feature, _ = model.sample_embedding_network(
+                positive_feature = model.sample_embedding_network(
                     batch['positive_img'].to(device))
                 positive_feature = model.linear(
                     model.attention(positive_feature))
-                # positive_feature, _ = model.attention(
+                # positive_feature = model.attention(
                 #     model.sample_embedding_network(batch['positive_img'].to(device)))
                 image_array_tests = torch.cat(
                     (image_array_tests, positive_feature))
@@ -150,9 +150,9 @@ def train_model(model, args):
 
             loss = 0
             for idx in range(len(batch_data['sketch_imgs'])): # len(batch_data['sketch_imgs']) = batch_size
-                sketch_seq_feature, _ = model.sketch_embedding_network(batch_data['sketch_imgs'][idx].to(device))
-                positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'][idx].unsqueeze(0).to(device))
-                negative_feature, _ = model.sample_embedding_network(batch_data['negative_img'][idx].unsqueeze(0).to(device))
+                sketch_seq_feature = model.sketch_embedding_network(batch_data['sketch_imgs'][idx].to(device))
+                positive_feature = model.sample_embedding_network(batch_data['positive_img'][idx].unsqueeze(0).to(device))
+                negative_feature = model.sample_embedding_network(batch_data['negative_img'][idx].unsqueeze(0).to(device))
                 
                 sketch_seq_feature = model.attn(model.sketch_attention(sketch_seq_feature))
                 # sketch_seq_feature = model.sketch_linear(model.sketch_attention(sketch_seq_feature))

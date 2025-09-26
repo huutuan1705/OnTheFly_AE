@@ -34,9 +34,9 @@ class Siamese_SBIR(nn.Module):
         positive_img = batch[f'positive_img_{num}'].to(device)
         negative_img = batch[f'negative_img_{num}'].to(device)
         
-        positive_feature, _ = self.sample_embedding_network(positive_img)
-        negative_feature, _ = self.sample_embedding_network(negative_img)
-        sketch_feature, _ = self.sketch_embedding_network(sketch_img)
+        positive_feature = self.sample_embedding_network(positive_img)
+        negative_feature = self.sample_embedding_network(negative_img)
+        sketch_feature = self.sketch_embedding_network(sketch_img)
         
         positive_feature = self.attention(positive_feature)
         negative_feature = self.attention(negative_feature)
