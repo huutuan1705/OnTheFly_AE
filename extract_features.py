@@ -41,7 +41,7 @@ class Environtment():
         linear.load_state_dict(linear_state['linear'])
         
         dataset_train = FGSBIR_Dataset(args, mode='train')
-        dataloader_train = data.DataLoader(dataset_train, batch_size=args.batch_size, shuffle=True, num_workers=int(args.threads))
+        dataloader_train = data.DataLoader(dataset_train, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
         self.image_array_train = torch.FloatTensor().to(device)
         self.sketch_array_train = []
@@ -62,7 +62,7 @@ class Environtment():
                 self.image_name_train.extend(sample_batch['positive_path'])
                 
         dataset_test = FGSBIR_Dataset(args, mode='test')
-        dataloader_test = data.DataLoader(dataset_test, batch_size=args.test_batch_size, shuffle=False, num_workers=int(args.threads))
+        dataloader_test = data.DataLoader(dataset_test, batch_size=args.test_batch_size, shuffle=False, num_workers=4)
 
         self.image_array_test = torch.FloatTensor().to(device)
         self.sketch_array_test = []
