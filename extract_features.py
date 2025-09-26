@@ -96,6 +96,7 @@ if __name__ == "__main__":
     parsers = argparse.ArgumentParser(description='Baseline Fine-Grained SBIR model')
     parsers.add_argument('--dataset_name', type=str, default='ShoeV2')
     parsers.add_argument('--pretrained_dir', type=str, default='')
+    parsers.add_argument('--root_dir', type=str, default='/kaggle/input/fg-sbir-dataset')
     parsers.add_argument('--batch_size', type=int, default=1)
     parsers.add_argument('--test_batch_size', type=int, default=1)
     parsers.add_argument('--num_heads', type=int, default=8)
