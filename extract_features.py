@@ -57,7 +57,7 @@ class Environtment():
             self.sketch_array_train.append(sketch_feature_all)
             
             if sample_batch['positive_path'][0] not in self.image_name_train:
-                rgb_feature = linear(attention(sample_embedding_network(sample_batch['positive_img'])))
+                rgb_feature = linear(attention(sample_embedding_network(sample_batch['positive_img'].to(device))))
                 self.image_array_train = torch.cat((self.image_array_train, rgb_feature.detach()))
                 self.image_name_train.extend(sample_batch['positive_path'])
                 
