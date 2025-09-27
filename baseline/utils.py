@@ -75,10 +75,8 @@ def get_transform(type, aug_mode='geometric_strong'):
                 transforms.RandomHorizontalFlip(0.7),  # Higher flip probability
                 transforms.RandomRotation(50),  # Stronger rotation
                 transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=10),  # Add affine
-                # transforms.ColorJitter(brightness=0.05, contrast=0.05, saturation=0.05),  # Weak color
                 transforms.RandomApply([weak_color_jitter], p=0.8),
                 transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.2),
-                # transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),  # Add blur
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
@@ -87,12 +85,9 @@ def get_transform(type, aug_mode='geometric_strong'):
             # Strong color augmentation, weak geometric augmentation
             transform_list = [
                 transforms.Resize(299),  # Weaker crop
-                # transforms.RandomHorizontalFlip(0.5),  # Lower flip probability
                 transforms.RandomRotation(5),  # Weaker rotation
-                # transforms.ColorJitter(),  # Strong color
                 transforms.RandomApply([strong_color_jitter], p=0.8),
                 transforms.RandomGrayscale(p=0.5),  # Add grayscale
-                # transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0)),  # Add blur
                 transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.8),
                 transforms.ToTensor(),
                 transforms.RandomErasing(p=0.3, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0),
