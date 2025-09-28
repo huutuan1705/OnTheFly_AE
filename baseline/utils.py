@@ -32,19 +32,18 @@ def info_nce_loss(args, features_view1: torch.Tensor, features_view2: torch.Tens
     
     
 def loss_fn(args, features):
-    sketch_feature_1 = features['sketch_feature_1']
-    positive_feature_1 = features['positive_feature_1']
-    negative_feature_1 = features['negative_feature_1']
+    sketch_list, positive_list, negative_list = [], [], []
     
-    sketch_feature_2 = features['sketch_feature_2']
-    positive_feature_2 = features['positive_feature_2']
-    negative_feature_2 = features['negative_feature_2']
-    
+    for i in range(1, args.num_views + 1):
+        sketch_list.append(features[f'sketch_feature_{i}'])
+        positive_list.append(features[f'positive_feature_{i}'])
+        negative_list.append(features[f'negative_feature_{i}'])
+        
     criterion = nn.TripletMarginLoss(margin=args.margin)
     
-    sum_sketch_features = torch.cat([z for z in [sketch_feature_1, sketch_feature_2]], dim=0)
-    sum_positive_features = torch.cat([z for z in [positive_feature_1, positive_feature_2]], dim=0)
-    sum_negative_feature = torch.cat([z for z in [negative_feature_1, negative_feature_2]], dim=0)
+    sum_sketch_features = torch.cat(sketch_list, dim=0)
+    sum_positive_features = torch.cat(positive_list, dim=0)
+    sum_negative_feature = torch.cat(negative_list, dim=0)
     
     infonce_cross = info_nce_loss(args=args, features_view1=sum_sketch_features, features_view2=sum_positive_features)
     triplet_loss = criterion(sum_sketch_features, sum_positive_features, sum_negative_feature)
@@ -85,7 +84,7 @@ def get_transform(type, aug_mode=1):
             ]
             
         elif aug_mode == 3:
-            # Focus on crop augmentation
+            # Focus on Perspective and Afine augmentation
             transform_list = [
                 transforms.Resize(299),  # Weaker crop
                 transforms.RandomPerspective(distortion_scale=0.45, p=0.9),
@@ -96,6 +95,31 @@ def get_transform(type, aug_mode=1):
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
             
+        elif aug_mode == 4:
+            # Focus on photometric augmentation
+            transform_list = [
+                transforms.Resize(299),  # Weaker crop
+                transforms.RandomAutocontrast(p=0.8),
+                transforms.RandomAdjustSharpness(sharpness_factor=2.0, p=0.6),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ]
+        
+        elif aug_mode == 5:
+            # Focus on photometric augmentation
+            transform_list = [
+                transforms.Resize(299),  # Weaker crop
+                transforms.RandomApply(
+                    [transforms.RandomPosterize(bits=3)], p=0.7
+                ),  # reduce color bit
+                transforms.RandomApply(
+                    [transforms.RandomSolarize(threshold=128)], p=0.7
+                ),  # Solarize
+                transforms.RandomGrayscale(p=0.3),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ]
+               
         else:  # default mode
             # Balanced augmentation (original)
             transform_list = [
