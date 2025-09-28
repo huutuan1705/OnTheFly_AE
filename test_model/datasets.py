@@ -24,8 +24,8 @@ class FGSBIR_Dataset(Dataset):
         self.train_sketch = [x for x in self.coordinate if 'train' in x]
         self.test_sketch = [x for x in self.coordinate if 'test' in x]
         
-        self.train_transform_1 = get_transform(type='train', aug_mode='geometrci_strong')
-        self.train_transform_2 = get_transform(type='train', aug_mode='color_strong')
+        self.train_transform_1 = get_transform(type='train', aug_mode=1)
+        self.train_transform_2 = get_transform(type='train', aug_mode=2)
         # self.neg_transform = get_transform(type='train', aug_mode='auto')
         self.test_transform = get_transform('test')
         
