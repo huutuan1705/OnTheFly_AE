@@ -49,13 +49,11 @@ class Siamese_SBIR(nn.Module):
         return sketch_feature, positive_feature, negative_feature
     
     def forward(self, batch):
-        sketch_feature_1, positive_feature_1, negative_feature_1 = self.extract_feature(batch=batch, num=1)
-        sketch_feature_2, positive_feature_2, negative_feature_2 = self.extract_feature(batch=batch, num=2)
-    
-        
-        return {
-            'sketch_feature_1': sketch_feature_1, 'sketch_feature_2': sketch_feature_2,
-            'positive_feature_1': positive_feature_1, 'positive_feature_2': positive_feature_2,
-            'negative_feature_1': negative_feature_1, 'negative_feature_2': negative_feature_2,
-        }
-    
+        outputs = {}
+        for i in range(1, self.args.num_views+1):
+            sketch_feature, positive_feature, negative_feature = self.extract_feature(batch=batch, num=i)
+            outputs[f'sketch_feature_{i}']   = sketch_feature
+            outputs[f'positive_feature_{i}'] = positive_feature
+            outputs[f'negative_feature_{i}'] = negative_feature
+            
+        return outputs
