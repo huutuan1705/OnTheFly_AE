@@ -63,7 +63,7 @@ class FGSBIR_Dataset(Dataset):
             negative_image = Image.open(negative_path).convert("RGB")
             # negative_image = self.neg_transform(negative_image)
             
-            for i in range(1, self.num_views + 1):
+            for i in range(1, self.args.num_views + 1):
                 trans = getattr(self, f"train_transform_{i}")   # lấy đúng transform_i
                 sample[f'sketch_img_{i}']   = trans(sketch_img)
                 sample[f'positive_img_{i}'] = trans(positive_image)
