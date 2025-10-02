@@ -71,7 +71,7 @@ def get_transform(type, aug_mode=1):
             ]
             
         elif aug_mode == 2:
-            # Focus on crop augmentation
+            # Focus on cutout augmentation
             transform_list = [
                 transforms.Resize(299),  # Weaker crop
                 transforms.RandomRotation(5),  # Weaker rotation
@@ -84,7 +84,7 @@ def get_transform(type, aug_mode=1):
             ]
             
         elif aug_mode == 3:
-            # Focus on Perspective and Afine augmentation
+            # Focus on Perspective and Affine augmentation
             transform_list = [
                 transforms.Resize(299),  # Weaker crop
                 transforms.RandomPerspective(distortion_scale=0.45, p=0.9),
@@ -95,31 +95,6 @@ def get_transform(type, aug_mode=1):
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
             
-        elif aug_mode == 4:
-            # Focus on photometric augmentation
-            transform_list = [
-                transforms.Resize(299),  # Weaker crop
-                transforms.RandomAutocontrast(p=0.8),
-                transforms.RandomAdjustSharpness(sharpness_factor=2.0, p=0.6),
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-            ]
-        
-        elif aug_mode == 5:
-            # Focus on photometric augmentation
-            transform_list = [
-                transforms.Resize(299),  # Weaker crop
-                transforms.RandomApply(
-                    [transforms.RandomPosterize(bits=3)], p=0.7
-                ),  # reduce color bit
-                transforms.RandomApply(
-                    [transforms.RandomSolarize(threshold=128)], p=0.7
-                ),  # Solarize
-                transforms.RandomGrayscale(p=0.3),
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-            ]
-               
         else:  # default mode
             # Balanced augmentation (original)
             transform_list = [
