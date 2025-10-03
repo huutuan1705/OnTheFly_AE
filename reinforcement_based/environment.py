@@ -9,9 +9,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class Model():
     def __init__(self):
-        with open("Train.pickle", "rb") as f:
+        with open("/kaggle/input/simclr_pickle/pytorch/default/1/train_ChairV2.pickle", "rb") as f:
             self.Image_Array_Train, self.Sketch_Array_Train, self.Image_Name_Train, self.Sketch_Name_Train = pickle.load(f)
-        with open("Test.pickle", "rb") as f:
+        with open("/kaggle/input/simclr_pickle/pytorch/default/1/test_ChairV2.pickle", "rb") as f:
             self.Image_Array_Test, self.Sketch_Array_Test, self.Image_Name_Test, self.Sketch_Name_Test = pickle.load(f)
 
         self.policy_network = Policy().to(device)
