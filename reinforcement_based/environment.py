@@ -30,34 +30,60 @@ class Model():
             reward = 1. / rank.item()
         return reward
     
-    def evaluate_RL(self, step_stddev):
+    def evaluate_RL(self, step_stddev=1):
         self.policy_network.eval()
-        num_of_Sketch_Step = len(self.Sketch_Array_Test[0])
+        num_steps = len(self.Sketch_Array_Test[0])
         avererage_area = []
-        rank_all = torch.zeros(len(self.Sketch_Array_Test), num_of_Sketch_Step)
+        avererage_area_percentile = []
+        mean_rank_ourB = []
+        mean_rank_ourA = []
+        avererage_ourB = []
+        avererage_ourA = []
+        exps = np.linspace(1, num_steps, num_steps) / num_steps
+        factor = np.exp(1 - exps) / np.e
+        sketch_range = []
+        
+        rank_all = torch.zeros(len(self.Sketch_Array_Test), num_steps)
+        rank_all_percentile = torch.zeros(len(self.Sketch_Array_Test), num_steps)
+        
         for i_batch, sanpled_batch in enumerate(self.Sketch_Array_Test):
             #print('evaluate_RL running', i_batch)
             sketch_name = self.Sketch_Name_Test[i_batch]
             sketch_query_name = '_'.join(sketch_name.split('/')[-1].split('_')[:-1])
             position_query = self.Image_Name_Test.index(sketch_query_name)
             mean_rank = []
-
+            mean_rank_percentile = []
+            
             for i_sketch in range(sanpled_batch.shape[0]):
                 _, sketch_feature, _, _  = self.policy_network.select_action(sanpled_batch[i_sketch].unsqueeze(0).to(device))
                 target_distance = F.pairwise_distance(F.normalize(sketch_feature), self.Image_Array_Test[position_query].unsqueeze(0))
                 distance = F.pairwise_distance(F.normalize(sketch_feature), self.Image_Array_Test)
                 rank_all[i_batch, i_sketch] = distance.le(target_distance).sum()
-
+                rank_all_percentile[i_batch, i_sketch] = (len(distance) - rank_all[i_batch, i_sketch]) / (len(distance) - 1)
+                
                 if rank_all[i_batch, i_sketch].item() == 0:
                     mean_rank.append(1.)
                 else:
                     mean_rank.append(1/rank_all[i_batch, i_sketch].item())
+                    mean_rank_percentile.append(rank_all_percentile[i_batch, i_sketch].item())
+                    mean_rank_ourB.append(1/rank_all[i_batch, i_sketch].item() * factor[i_sketch])
+                    mean_rank_ourA.append(rank_all_percentile[i_batch, i_sketch].item()*factor[i_sketch])
+                    
             avererage_area.append(np.sum(mean_rank)/len(mean_rank))
-
+            avererage_area_percentile.append(np.sum(mean_rank_percentile)/len(mean_rank_percentile))
+            avererage_ourB.append(np.sum(mean_rank_ourB)/len(mean_rank_ourB))
+            avererage_ourA.append(np.sum(mean_rank_ourA)/len(mean_rank_ourA))
+            
         top1_accuracy = rank_all[:, -1].le(1).sum().numpy() / rank_all.shape[0]
-        meanIOU = np.mean(avererage_area)
-
-        return top1_accuracy, meanIOU
+        top5_accuracy = rank_all[:, -1].le(5).sum().numpy() / rank_all.shape[0]
+        top10_accuracy = rank_all[:, -1].le(10).sum().numpy() / rank_all.shape[0]
+        
+        meanMA = np.mean(avererage_area_percentile)
+        meanMB = np.mean(avererage_area)
+        meanOurB = np.mean(avererage_ourB)
+        meanOurA = np.mean(avererage_ourA)
+        
+        return top1_accuracy, top5_accuracy, top10_accuracy, meanMA, meanMB, meanOurA, meanOurB
 
 
     def calculate_loss(self, log_probs, rewards, entropies):

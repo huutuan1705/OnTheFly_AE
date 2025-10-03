@@ -1,7 +1,10 @@
 import torch
 import argparse
-from test_model.model import Siamese_SBIR
-from test_model.train import train_model
+# from test_model.model import Siamese_SBIR
+# from test_model.train import train_model
+
+from reinforcement_based.environment import Model
+from reinforcement_based.train import train_model
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -31,5 +34,5 @@ if __name__ == "__main__":
     parsers.add_argument('--epochs', type=int, default=200)
     
     args = parsers.parse_args()
-    model = Siamese_SBIR(args).to(device)
+    model = Model().to(device)
     train_model(model, args)
