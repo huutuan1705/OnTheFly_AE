@@ -24,6 +24,8 @@ def get_dataloader(args):
 def train_model(model, args):
     step_stddev = 1
     model = model.to(device)
+    if args.load_pretrained:
+        model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
     model.policy_network.train()
     dataloader_train, dataloader_test = get_dataloader(args)
     loss_fn = nn.TripletMarginLoss(margin=args.margin)
