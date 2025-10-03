@@ -68,11 +68,9 @@ def evaluate_model(model, dataloader_test):
         avererage_ourA = []
         exps = np.linspace(1, num_steps, num_steps) / num_steps
         factor = np.exp(1 - exps) / np.e
-        sketch_range = []
         
         rank_all = torch.zeros(len(sketch_array_tests), num_steps)
         rank_all_percentile = torch.zeros(len(sketch_array_tests), num_steps)
-        sketch_range = torch.Tensor(sketch_range)
         
         for i_batch, sampled_batch in enumerate(sketch_array_tests):
             mean_rank = []
