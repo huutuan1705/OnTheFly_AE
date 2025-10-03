@@ -1,13 +1,14 @@
 import torch 
 import pickle
 import numpy as np
+import torch.nn as nn
 import torch.nn.functional as F
 
 from reinforcement_based.reinforcement import Policy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-class Model():
+class Model(nn.Module):
     def __init__(self):
         with open("/kaggle/input/simclr_pickle/pytorch/default/1/train_ChairV2.pickle", "rb") as f:
             self.Image_Array_Train, self.Sketch_Array_Train, self.Image_Name_Train, self.Sketch_Name_Train = pickle.load(f)
