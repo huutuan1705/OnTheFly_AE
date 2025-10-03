@@ -10,6 +10,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class Model(nn.Module):
     def __init__(self):
+        super(Model, self).__init__()
         with open("/kaggle/input/simclr_pickle/pytorch/default/1/train_ChairV2.pickle", "rb") as f:
             self.Image_Array_Train, self.Sketch_Array_Train, self.Image_Name_Train, self.Sketch_Name_Train = pickle.load(f)
         with open("/kaggle/input/simclr_pickle/pytorch/default/1/test_ChairV2.pickle", "rb") as f:
