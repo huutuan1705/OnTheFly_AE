@@ -1,4 +1,5 @@
 import torch 
+import os
 import pickle
 import numpy as np
 import torch.nn as nn
@@ -9,11 +10,13 @@ from reinforcement_based.reinforcement import Policy
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class Model(nn.Module):
-    def __init__(self):
+    def __init__(self, args):
         super(Model, self).__init__()
-        with open("/kaggle/input/simclr_pickle/pytorch/default/1/train_ChairV2.pickle", "rb") as f:
+        train_pickle = os.path.join(args.root_dir, 'train_' + args.dataset_name +'.pickle')
+        test_pickle = os.path.join(args.root_dir, 'test_' + args.dataset_name +'.pickle')
+        with open(train_pickle, "rb") as f:
             self.Image_Array_Train, self.Sketch_Array_Train, self.Image_Name_Train, self.Sketch_Name_Train = pickle.load(f)
-        with open("/kaggle/input/simclr_pickle/pytorch/default/1/test_ChairV2.pickle", "rb") as f:
+        with open(test_pickle, "rb") as f:
             self.Image_Array_Test, self.Sketch_Array_Test, self.Image_Name_Test, self.Sketch_Name_Test = pickle.load(f)
 
         self.policy_network = Policy().to(device)

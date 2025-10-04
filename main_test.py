@@ -34,5 +34,5 @@ if __name__ == "__main__":
     parsers.add_argument('--epochs', type=int, default=200)
     
     args = parsers.parse_args()
-    model = Model().to(device)
+    model = Model(args).to(device)
     train_model(model, args)
