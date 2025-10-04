@@ -16,6 +16,7 @@ if __name__ == "__main__":
     parsers.add_argument('--root_dir', type=str, default='/kaggle/input/fg-sbir-dataset')
     parsers.add_argument('--pretrained_dir', type=str, default='/kaggle/input/base_ae_model/pytorch/default/1/best_model.pth')
     parsers.add_argument('--save_dir', type=str, default='/kaggle/working/')
+    parsers.add_argument('--pickle_dir', type=str, default='/kaggle/input/simclr_pickle/pytorch/default/2')
     
     parsers.add_argument('--use_kaiming_init', type=bool, default=True)
     parsers.add_argument('--load_pretrained', type=bool, default=False)

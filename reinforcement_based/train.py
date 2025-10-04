@@ -10,25 +10,12 @@ from phase2.datasets import FGSBIR_Dataset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def get_dataloader(args):
-    dataset_train = FGSBIR_Dataset(args, mode='train')
-    dataloader_train = data.DataLoader(
-        dataset_train, batch_size=args.batch_size, shuffle=True, num_workers=int(args.threads))
-
-    dataset_test = FGSBIR_Dataset(args, mode='test')
-    dataloader_test = data.DataLoader(
-        dataset_test, batch_size=args.test_batch_size, shuffle=False, num_workers=int(args.threads))
-
-    return dataloader_train, dataloader_test
-
 def train_model(model, args):
     step_stddev = 1
     model = model.to(device)
     if args.load_pretrained:
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
     model.policy_network.train()
-    dataloader_train, dataloader_test = get_dataloader(args)
-    loss_fn = nn.TripletMarginLoss(margin=args.margin)
     optimizer = optim.Adam([
         {'params': model.policy_network.parameters(), 'lr': args.lr},
     ])
