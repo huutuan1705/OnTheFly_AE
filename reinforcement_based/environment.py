@@ -3,6 +3,7 @@ import os
 import pickle
 import numpy as np
 import torch.nn as nn
+from tqdm import tqdm
 import torch.nn.functional as F
 
 from reinforcement_based.reinforcement import Policy
@@ -51,7 +52,7 @@ class Model(nn.Module):
         rank_all = torch.zeros(len(self.Sketch_Array_Test), num_steps)
         rank_all_percentile = torch.zeros(len(self.Sketch_Array_Test), num_steps)
         
-        for i_batch, sanpled_batch in enumerate(self.Sketch_Array_Test):
+        for i_batch, sanpled_batch in enumerate(tqdm(self.Sketch_Array_Test)):
             #print('evaluate_RL running', i_batch)
             sketch_name = self.Sketch_Name_Test[i_batch]
             sketch_query_name = '_'.join(sketch_name.split('/')[-1].split('_')[:-1])

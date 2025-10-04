@@ -24,7 +24,7 @@ def train_model(model, args):
     top5, top10, avg_loss = 0, 0, 0
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
-        for i, sanpled_batch in enumerate(model.Sketch_Array_Train):
+        for i, sanpled_batch in enumerate(tqdm(model.Sketch_Array_Train)):
             entropies = []
             log_probs = []
             rewards = []
