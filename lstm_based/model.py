@@ -96,7 +96,6 @@ class Model(nn.Module):
         avererage_ourA = []
         exps = np.linspace(1, num_steps, num_steps) / num_steps
         factor = np.exp(1 - exps) / np.e
-        sketch_range = []
         
         rank_all = torch.zeros(len(self.Sketch_Array_Test), num_steps)
         rank_all_percentile = torch.zeros(len(self.Sketch_Array_Test), num_steps)

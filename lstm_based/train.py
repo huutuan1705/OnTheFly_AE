@@ -11,7 +11,6 @@ def train_model(model, args):
     if args.load_pretrained:
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
     
-    model.bilstm.train()
     loss_fn = nn.TripletMarginLoss(margin=args.margin)
     optimizer = optim.Adam([
         {'params': model.bilstm.parameters(), 'lr': args.lr},
@@ -20,6 +19,7 @@ def train_model(model, args):
 
     top5, top10, avg_loss = 0, 0, 0
     for i_epoch in range(args.epochs):
+        model.bilstm.train()
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
         for i, sanpled_batch in enumerate(tqdm(model.Sketch_Array_Train)):
             loss_step = 0
@@ -33,7 +33,7 @@ def train_model(model, args):
         loss_step += loss_triplet
         loss_buffer.append(loss_step)
         
-        if (i + 1) % 16 == 0:
+        if (i + 1) % 20 == 0:
             optimizer.zero_grad()
             policy_loss = torch.stack(loss_buffer).mean()
             policy_loss.backward()
