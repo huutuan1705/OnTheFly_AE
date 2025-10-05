@@ -11,7 +11,7 @@ def train_model(model, args):
     if args.load_pretrained:
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
     
-    model.train()
+    model.bilstm.train()
     loss_fn = nn.TripletMarginLoss(margin=args.margin)
     optimizer = optim.Adam([
         {'params': model.bilstm.parameters(), 'lr': args.lr},
