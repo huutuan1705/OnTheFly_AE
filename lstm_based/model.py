@@ -108,7 +108,7 @@ class Model(nn.Module):
             position_query = self.Image_Name_Test.index(sketch_query_name)
             mean_rank = []
             mean_rank_percentile = []
-            sketch_features = self.bilstm(sanpled_batch)
+            sketch_features = self.bilstm(sanpled_batch.unsqueeze(0)).squeeze(0)
             
             for i_sketch in range(sanpled_batch.shape[0]):
                 sketch_feature = sketch_features[i_sketch].unsqueeze(0).to(device)
