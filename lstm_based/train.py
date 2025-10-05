@@ -27,8 +27,8 @@ def train_model(model, args):
             positive, negative = model.get_sample(model.Sketch_Name_Train[i])
             sketch_features = model.bilstm(sanpled_batch.unsqueeze(0)).squeeze(0)
             for i_sketch in range(sanpled_batch.shape[0]):
-                sketch_feature = sketch_features[i_sketch].unsqueeze(0).to(device)
-                loss_triplet += loss_fn(sketch_feature, positive.unsqueeze(0), negative.unsqueeze(0))
+                sketch_feature = sketch_features[i_sketch].to(device)
+                loss_triplet += loss_fn(sketch_feature, positive, negative)
                 
         loss_step += loss_triplet
         loss_buffer.append(loss_step)
