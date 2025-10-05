@@ -1,17 +1,11 @@
-import numpy as np
 import torch
-import torch.nn as nn
-import torch.utils.data as data
-import torch.nn.functional as F
 import torch.nn.utils as utils
 from tqdm import tqdm
 from torch import optim
-from phase2.datasets import FGSBIR_Dataset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def train_model(model, args):
-    step_stddev = 1
     model = model.to(device)
     if args.load_pretrained:
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
