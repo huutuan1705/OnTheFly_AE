@@ -46,7 +46,7 @@ class BiLSTM_Module(nn.Module):
         self.attention = Attention_sequence()
         self.proj = Linear_global(feature_num=64)
         
-    def forwars(self, x):
+    def forward(self, x):
         x, _ = self.bilstm1(x)
         x, _ = self.bilstm2(x)
         x = self.attention(x)
