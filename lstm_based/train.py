@@ -24,7 +24,7 @@ def train_model(model, args):
         for i, sanpled_batch in enumerate(tqdm(model.Sketch_Array_Train)):
             loss_step = 0
             loss_triplet = 0
-            positive, negative = model.get_sample(model.Sketch_Array_Train[i])
+            positive, negative = model.get_sample(model.Sketch_Name_Train[i])
             sketch_features = model.bilstm(sanpled_batch)
             for i_sketch in range(sanpled_batch.shape[0]):
                 sketch_feature = sketch_features[i_sketch].unsqueeze(0).to(device)
