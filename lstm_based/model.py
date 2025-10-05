@@ -64,7 +64,7 @@ class Model(nn.Module):
         with open(test_pickle, "rb") as f:
             self.Image_Array_Test, self.Sketch_Array_Test, self.Image_Name_Test, self.Sketch_Name_Test = pickle.load(f)
             
-        self.bilstm = BiLSTM_Module()
+        self.bilstm = BiLSTM_Module().to(device)
         
     def forward(self, x):
         x = self.bilstm(x)
