@@ -26,5 +26,6 @@ def train_model(model, args):
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
         for i, sanpled_batch in enumerate(model.Sketch_Array_Train):
+            sketch_features = model.bilstm(sanpled_batch)
             for i_sketch in range(sanpled_batch.shape[0]):
-                pass
+                sketch_feature = sketch_features[i_sketch].unsqueeze(0).to(device)

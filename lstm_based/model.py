@@ -93,9 +93,10 @@ class Model(nn.Module):
             position_query = self.Image_Name_Test.index(sketch_query_name)
             mean_rank = []
             mean_rank_percentile = []
+            sketch_features = self.bilstm(sanpled_batch)
             
             for i_sketch in range(sanpled_batch.shape[0]):
-                _, sketch_feature, _, _  = self.policy_network.select_action(sanpled_batch[i_sketch].unsqueeze(0).to(device))
+                sketch_feature = sketch_features[i_sketch].unsqueeze(0).to(device)
                 target_distance = F.pairwise_distance(F.normalize(sketch_feature), self.Image_Array_Test[position_query].unsqueeze(0))
                 distance = F.pairwise_distance(F.normalize(sketch_feature), self.Image_Array_Test)
                 rank_all[i_batch, i_sketch] = distance.le(target_distance).sum()
