@@ -70,7 +70,21 @@ class Model(nn.Module):
         
         return x
     
-    def evaluate_RL(self):
+    def get_sample(self, sketch_name):
+        sketch_query_name = '_'.join(sketch_name.split('/')[-1].split('_')[:-1])
+
+        position_query = self.Image_Name_Train.index(sketch_query_name)
+        positive = self.Image_Array_Train[position_query]
+
+        negative_index = position_query
+        while(negative_index == position_query):
+            negative_index = np.random.randint(0, 300)
+
+        negative = self.Image_Array_Train[negative_index]
+        
+        return positive, negative
+    
+    def evaluate_lstm(self):
         self.bilstm.eval()
         num_steps = len(self.Sketch_Array_Test[0])
         avererage_area = []
