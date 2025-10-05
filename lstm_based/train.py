@@ -30,16 +30,16 @@ def train_model(model, args):
                 sketch_feature = sketch_features[i_sketch].to(device)
                 loss_triplet += loss_fn(sketch_feature, positive.to(device), negative.to(device))
                 
-        loss_step += loss_triplet
-        loss_buffer.append(loss_step)
+            loss_step += loss_triplet
+            loss_buffer.append(loss_step)
         
-        if (i + 1) % 20 == 0:
-            optimizer.zero_grad()
-            policy_loss = torch.stack(loss_buffer).mean()
-            policy_loss.backward()
-            utils.clip_grad_norm_(model.bilstm.parameters(), 40)
-            optimizer.step()
-            loss_buffer = []
+            if (i + 1) % 20 == 0:
+                optimizer.zero_grad()
+                policy_loss = torch.stack(loss_buffer).mean()
+                policy_loss.backward()
+                utils.clip_grad_norm_(model.bilstm.parameters(), 40)
+                optimizer.step()
+                loss_buffer = []
     
         with torch.no_grad():
             top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB  = model.evaluate_lstm()
