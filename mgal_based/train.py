@@ -49,7 +49,7 @@ def train_model(model, args):
                 loss_buffer = []
                 
             with torch.no_grad():
-                top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB  = model.linear()
+                top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB  = model.evaluate_linear()
                 model.linear.train()
                 
             if top5_eval > top5:
