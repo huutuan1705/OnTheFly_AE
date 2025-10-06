@@ -34,7 +34,7 @@ class Model(nn.Module):
         with open(test_pickle, "rb") as f:
             self.Image_Array_Test, self.Sketch_Array_Test, self.Image_Name_Test, self.Sketch_Name_Test = pickle.load(f)
         
-        csv_path = os.path.join(args.root_dir, args.dataset_name, args.dataset_name + '.csv')
+        csv_path = os.path.join(args.root_dir, args.dataset_name, args.dataset_name + '_labels.csv')
         self.semantic_df = pd.read_csv(csv_path)
         
         self.bilstm = BiLSTM_Module().to(device)
