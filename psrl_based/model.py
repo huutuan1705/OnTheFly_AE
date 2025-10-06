@@ -102,7 +102,7 @@ class Model(nn.Module):
                 attr_values = row.drop(columns=['image_name']).iloc[0].to_numpy(dtype=np.float32)
                 semantic_vec = torch.tensor(attr_values)
                 
-            sketch_features = self.bilstm(sanpled_batch, semantic_vec).squeeze(0)
+            sketch_features = self.forward(sanpled_batch, semantic_vec).squeeze(0)
             
             for i_sketch in range(sanpled_batch.shape[0]):
                 sketch_feature = sketch_features[i_sketch].unsqueeze(0).to(device)
