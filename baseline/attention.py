@@ -51,9 +51,9 @@ class SketchAttention(nn.Module):
         
         
 class Linear_global(nn.Module):
-    def __init__(self, feature_num):
+    def __init__(self, feature_num, in_features=2048):
         super(Linear_global, self).__init__()
-        self.head_layer = nn.Linear(2048, feature_num)
+        self.head_layer = nn.Linear(in_features, feature_num)
         self.dropout = nn.Dropout(p=0.2)
 
     def forward(self, x):

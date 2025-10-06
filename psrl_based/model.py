@@ -11,11 +11,11 @@ from baseline.attention import Linear_global
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class BiLSTM_Module(nn.Module):
-    def __init__(self):
+    def __init__(self, in_feature):
         super(BiLSTM_Module, self).__init__()
         self.bilstm1 = nn.LSTM(input_size=2048, hidden_size=1024, num_layers=2, batch_first=True, bidirectional=True, dropout=0.1)
         self.bilstm2 = nn.LSTM(input_size=2048, hidden_size=1024, num_layers=2, batch_first=True, bidirectional=True, dropout=0.1)
-        self.proj = Linear_global(feature_num=64)
+        self.proj = Linear_global(feature_num=64, in_features=in_feature)
         
     def forward(self, x):
         x, _ = self.bilstm1(x)
@@ -36,8 +36,9 @@ class Model(nn.Module):
         
         csv_path = os.path.join(args.root_dir, args.dataset_name, args.dataset_name + '_labels.csv')
         self.semantic_df = pd.read_csv(csv_path)
+        self.semantic_dim = self.semantic_df.shape[1] - 1
         
-        self.bilstm = BiLSTM_Module().to(device)
+        self.bilstm = BiLSTM_Module(in_feature=2048+self.semantic_dim).to(device)
         
     def forward(self, x, semantic_vector):
         semantic_expand = semantic_vector.unsqueeze(0).repeat(x.size(0), 1) #(20, 6)
