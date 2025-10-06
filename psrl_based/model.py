@@ -72,8 +72,6 @@ class Model(nn.Module):
     def evaluate_lstm(self):
         self.bilstm.eval()
         
-        
-            
         num_steps = len(self.Sketch_Array_Test[0])
         avererage_area = []
         avererage_area_percentile = []
@@ -96,7 +94,6 @@ class Model(nn.Module):
             mean_rank_percentile = []
             
             # Get sementic vector
-            position_query = self.Image_Name_Test.index(self.Sketch_Name_Test[i_batch])
             image_file_name = sketch_query_name + ".png"
             row = self.semantic_df[self.semantic_df['image_name'] == image_file_name]
             if row.empty:
