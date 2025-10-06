@@ -48,23 +48,23 @@ def train_model(model, args):
                 optimizer.step()
                 loss_buffer = []
                 
-            with torch.no_grad():
-                top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB  = model.evaluate_linear()
-                model.linear.train()
+        with torch.no_grad():
+            top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB  = model.evaluate_linear()
+            model.linear.train()
+            
+        if top5_eval > top5:
+            top5 = top5_eval
+            torch.save(model.state_dict(), "best_top5_model.pth")
+        if top10_eval > top10:
+            top10 = top10_eval
+            torch.save(model.state_dict(), "best_top10_model.pth")
                 
-            if top5_eval > top5:
-                top5 = top5_eval
-                torch.save(model.state_dict(), "best_top5_model.pth")
-            if top10_eval > top10:
-                top10 = top10_eval
-                torch.save(model.state_dict(), "best_top10_model.pth")
-                    
-            torch.save(model.state_dict(), "last_model.pth")
-            print('Top 1 accuracy : {:.5f}'.format(top1_eval))
-            print('Top 5 accuracy : {:.5f}'.format(top5_eval))
-            print('Top 10 accuracy: {:.5f}'.format(top10_eval))
-            print('Mean A         : {:.5f}'.format(meanA))
-            print('Mean B         : {:.5f}'.format(meanB))
-            print('meanOurA       : {:.5f}'.format(meanOurA))
-            print('meanOurB       : {:.5f}'.format(meanOurB))
-            print('Loss           : {:.5f}'.format(avg_loss))
+        torch.save(model.state_dict(), "last_model.pth")
+        print('Top 1 accuracy : {:.5f}'.format(top1_eval))
+        print('Top 5 accuracy : {:.5f}'.format(top5_eval))
+        print('Top 10 accuracy: {:.5f}'.format(top10_eval))
+        print('Mean A         : {:.5f}'.format(meanA))
+        print('Mean B         : {:.5f}'.format(meanB))
+        print('meanOurA       : {:.5f}'.format(meanOurA))
+        print('meanOurB       : {:.5f}'.format(meanOurB))
+        print('Loss           : {:.5f}'.format(avg_loss))
