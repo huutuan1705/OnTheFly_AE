@@ -40,8 +40,8 @@ class Model(nn.Module):
         
         return positive, negative
     
-    def evaluate_lstm(self):
-        self.bilstm.eval()
+    def evaluate_linear(self):
+        self.linear.eval()
         num_steps = len(self.Sketch_Array_Test[0])
         avererage_area = []
         avererage_area_percentile = []
