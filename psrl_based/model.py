@@ -14,12 +14,12 @@ class BiLSTM_Module(nn.Module):
     def __init__(self, in_feature):
         super(BiLSTM_Module, self).__init__()
         self.bilstm1 = nn.LSTM(input_size=in_feature, hidden_size=1024, num_layers=2, batch_first=True, bidirectional=True, dropout=0.1)
-        self.bilstm2 = nn.LSTM(input_size=in_feature, hidden_size=1024, num_layers=2, batch_first=True, bidirectional=True, dropout=0.1)
+        # self.bilstm2 = nn.LSTM(input_size=in_feature, hidden_size=1024, num_layers=2, batch_first=True, bidirectional=True, dropout=0.1)
         self.proj = Linear_global(feature_num=64, in_features=in_feature)
         
     def forward(self, x):
         x, _ = self.bilstm1(x)
-        x, _ = self.bilstm2(x)
+        # x, _ = self.bilstm2(x)
         x = self.proj(x)
         
         return x
