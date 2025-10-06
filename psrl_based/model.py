@@ -71,6 +71,15 @@ class Model(nn.Module):
     
     def evaluate_lstm(self):
         self.bilstm.eval()
+        
+        image_file_name = sketch_query_name + ".png"
+        row = self.semantic_df[self.semantic_df['image_name'] == image_file_name]
+        if row.empty:
+            semantic_vec = torch.zeros(len(self.semantic_df.columns) - 1)
+        else:
+            attr_values = row.drop(columns=['image_name']).iloc[0].to_numpy(dtype=np.float32)
+            semantic_vec = torch.tensor(attr_values)
+            
         num_steps = len(self.Sketch_Array_Test[0])
         avererage_area = []
         avererage_area_percentile = []
@@ -91,7 +100,8 @@ class Model(nn.Module):
             position_query = self.Image_Name_Test.index(sketch_query_name)
             mean_rank = []
             mean_rank_percentile = []
-            sketch_features = self.bilstm(sanpled_batch.unsqueeze(0)).squeeze(0)
+            
+            sketch_features = self.bilstm(sanpled_batch, semantic_vec).squeeze(0)
             
             for i_sketch in range(sanpled_batch.shape[0]):
                 sketch_feature = sketch_features[i_sketch].unsqueeze(0).to(device)
