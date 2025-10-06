@@ -69,7 +69,7 @@ class Model(nn.Module):
             
         return positive, negative, semantic_vec
     
-    def evaluate_lstm(self, sketch_name):
+    def evaluate_lstm(self):
         self.bilstm.eval()
         
         
