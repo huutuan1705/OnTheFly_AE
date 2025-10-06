@@ -9,8 +9,11 @@ import argparse
 # from lstm_based.model import Model
 # from lstm_based.train import train_model
 
-from mgal_based.model import Model
-from mgal_based.train import train_model
+# from mgal_based.model import Model
+# from mgal_based.train import train_model
+
+from psrl_based.model import Model
+from psrl_based.train import train_model
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
