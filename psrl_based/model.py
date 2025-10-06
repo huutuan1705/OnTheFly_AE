@@ -69,16 +69,10 @@ class Model(nn.Module):
             
         return positive, negative, semantic_vec
     
-    def evaluate_lstm(self):
+    def evaluate_lstm(self, sketch_name):
         self.bilstm.eval()
         
-        image_file_name = sketch_query_name + ".png"
-        row = self.semantic_df[self.semantic_df['image_name'] == image_file_name]
-        if row.empty:
-            semantic_vec = torch.zeros(len(self.semantic_df.columns) - 1)
-        else:
-            attr_values = row.drop(columns=['image_name']).iloc[0].to_numpy(dtype=np.float32)
-            semantic_vec = torch.tensor(attr_values)
+        
             
         num_steps = len(self.Sketch_Array_Test[0])
         avererage_area = []
@@ -101,6 +95,16 @@ class Model(nn.Module):
             mean_rank = []
             mean_rank_percentile = []
             
+            # Get sementic vector
+            position_query = self.Image_Name_Test.index(self.Sketch_Name_Test[i_batch])
+            image_file_name = sketch_query_name + ".png"
+            row = self.semantic_df[self.semantic_df['image_name'] == image_file_name]
+            if row.empty:
+                semantic_vec = torch.zeros(len(self.semantic_df.columns) - 1)
+            else:
+                attr_values = row.drop(columns=['image_name']).iloc[0].to_numpy(dtype=np.float32)
+                semantic_vec = torch.tensor(attr_values)
+                
             sketch_features = self.bilstm(sanpled_batch, semantic_vec).squeeze(0)
             
             for i_sketch in range(sanpled_batch.shape[0]):
