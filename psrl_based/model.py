@@ -40,9 +40,9 @@ class Model(nn.Module):
         self.bilstm = BiLSTM_Module().to(device)
         
     def forward(self, x, semantic_vector):
-        semantic_expand = semantic_vector.unsqueeze(0).unsqueeze(0).repeat(x.size(0), 1) #(20, 6)
+        semantic_expand = semantic_vector.unsqueeze(0).repeat(x.size(0), 1) #(20, 6)
         emb_vector = torch.cat([x, semantic_expand], dim=1) 
-        output = self.bilstm(emb_vector)
+        output = self.bilstm(emb_vector.unsqueeze(0))
         
         return output
     
