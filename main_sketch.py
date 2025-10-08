@@ -31,7 +31,9 @@ if __name__ == "__main__":
     parsers.add_argument('--epochs', type=int, default=200)
     
     args = parsers.parse_args()
-    envi = Environtment(args)
+    if args.load_pretrained is False:
+        envi = Environtment(args)
+        
     model = Siamese_SBIR(args).to(device)
     
     if args.load_pretrained is False:

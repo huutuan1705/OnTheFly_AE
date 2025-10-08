@@ -26,7 +26,7 @@ class SketchAttention(nn.Module):
         att_out, _  = self.mha(x_att, x_att, x_att)
         att_out = self.dropout(att_out)
         attn = identify * att_out + identify
-        # attn = F.normalize(attn)
+        attn = F.normalize(attn)
         
         output = self.proj(attn)
         return output
@@ -42,7 +42,7 @@ class Siamese_SBIR(nn.Module):
         with open(test_pickle, "rb") as f:
             self.Image_Array_Test, self.Sketch_Array_Test, self.Image_Name_Test, self.Sketch_Name_Test = pickle.load(f)
             
-        self.attn = SketchAttention(args) 
+        self.attn = SketchAttention(args).to(device)
         
     def get_sample(self, sketch_name):
         sketch_query_name = '_'.join(sketch_name.split('/')[-1].split('_')[:-1])
@@ -52,7 +52,7 @@ class Siamese_SBIR(nn.Module):
 
         negative_index = position_query
         while(negative_index == position_query):
-            negative_index = np.random.randint(0, 300)
+            negative_index = np.random.randint(0, len(self.Image_Array_Train))
 
         negative = self.Image_Array_Train[negative_index]
         
