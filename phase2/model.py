@@ -35,8 +35,8 @@ class Siamese_SBIR(nn.Module):
     def __init__(self, args):
         super(Siamese_SBIR, self).__init__()
         self.args = args
-        train_pickle = os.path.join(args.pickle_dir, 'train_' + args.dataset_name +'.pickle')
-        test_pickle = os.path.join(args.pickle_dir, 'test_' + args.dataset_name +'.pickle')
+        train_pickle = os.path.join('train_' + args.dataset_name +'.pickle')
+        test_pickle = os.path.join('test_' + args.dataset_name +'.pickle')
         with open(train_pickle, "rb") as f:
             self.Image_Array_Train, self.Sketch_Array_Train, self.Image_Name_Train, self.Sketch_Name_Train = pickle.load(f)
         with open(test_pickle, "rb") as f:
