@@ -31,8 +31,8 @@ if __name__ == "__main__":
     parsers.add_argument('--epochs', type=int, default=200)
     
     args = parsers.parse_args()
-    model = Siamese_SBIR(args).to(device)
     envi = Environtment(args)
+    model = Siamese_SBIR(args).to(device)
     
     if args.load_pretrained is False:
         linear_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_linear.pth", weights_only=True)
