@@ -26,7 +26,7 @@ class SketchAttention(nn.Module):
         att_out, _  = self.mha(x_att, x_att, x_att)
         att_out = self.dropout(att_out)
         attn = identify * att_out + identify
-        attn = F.normalize(attn)
+        # attn = F.normalize(attn)
         
         output = self.proj(attn)
         return output

@@ -37,7 +37,7 @@ def train_model(model, args):
             loss_step += loss_triplet
             loss_buffer.append(loss_step)
         
-            if ((i + 1) % 64 == 0) or (i+1 == len(model.Sketch_Array_Train)):
+            if ((i + 1) % 20 == 0) or (i+1 == len(model.Sketch_Array_Train)):
                 optimizer.zero_grad()
                 policy_loss = torch.stack(loss_buffer).mean()
                 policy_loss.backward()
