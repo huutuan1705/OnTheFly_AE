@@ -2,6 +2,7 @@ import torch
 import argparse
 from phase2.model import Siamese_SBIR
 from phase2.train import train_model
+from extract_features import Environtment
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -31,17 +32,10 @@ if __name__ == "__main__":
     
     args = parsers.parse_args()
     model = Siamese_SBIR(args).to(device)
+    envi = Environtment(args)
     
     if args.load_pretrained is False:
-        backbones_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top10_backbone.pth", weights_only=True)
-        attention_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top10_attention.pth", weights_only=True)
-        linear_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top10_linear.pth", weights_only=True)
-
-        model.sample_embedding_network.load_state_dict(backbones_state['sample_embedding_network'], strict=False)
-        model.attention.load_state_dict(attention_state['attention'], strict=False)
-        model.linear.load_state_dict(linear_state['linear'])
-        model.sketch_embedding_network.load_state_dict(backbones_state['sketch_embedding_network'], strict=False)
-        model.sketch_attention.load_state_dict(attention_state['sketch_attention'], strict=False)
+        linear_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_linear.pth", weights_only=True)
         model.attn.proj.load_state_dict(linear_state['sketch_linear'], strict=False)
     
     train_model(model, args)
