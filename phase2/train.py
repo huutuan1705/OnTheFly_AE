@@ -147,17 +147,19 @@ def train_model(model, args):
             model.attn.train()
             # model.sketch_linear.train()
             optimizer.zero_grad()
-            positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'].unsqueeze(0).to(device))
-            negative_feature, _ = model.sample_embedding_network(batch_data['negative_img'].unsqueeze(0).to(device))
+            positive_features = model.sample_embedding_network(batch_data['positive_img'].to(device))
+            negative_features = model.sample_embedding_network(batch_data['negative_img'].to(device))
+            positive_features = model.linear(model.attention(positive_features))
+            negative_features = model.linear(model.attention(negative_features))
+            
             loss = 0
             
             for idx in range(len(batch_data['sketch_imgs'])): # len(batch_data['sketch_imgs']) = batch_size
-                sketch_seq_feature, _ = model.sketch_embedding_network(batch_data['sketch_imgs'][idx].to(device))
-                
+                sketch_seq_feature = model.sketch_embedding_network(batch_data['sketch_imgs'][idx].to(device))
                 sketch_seq_feature = model.attn(model.sketch_attention(sketch_seq_feature))
-                # sketch_seq_feature = model.sketch_linear(model.sketch_attention(sketch_seq_feature))
-                positive_feature = model.linear(model.attention(positive_feature))
-                negative_feature = model.linear(model.attention(negative_feature))
+                
+                positive_feature = positive_features[idx]
+                negative_feature = negative_features[idx]
                 
                 positive_feature = positive_feature.repeat(sketch_seq_feature.shape[0], 1)
                 negative_feature = negative_feature.repeat(sketch_seq_feature.shape[0], 1)
