@@ -15,7 +15,7 @@ class SketchAttention(nn.Module):
         self.mha = nn.MultiheadAttention(2048, num_heads=8, batch_first=True)
         self.dropout = nn.Dropout(p=0.2)
         
-        self.proj = Linear_global(feature_num=64)
+        self.proj = Linear_global(feature_num=args.output_size)
         
     def forward(self, x):
         identify = x
