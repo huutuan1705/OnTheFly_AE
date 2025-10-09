@@ -147,8 +147,8 @@ def train_model(model, args):
             model.attn.train()
             # model.sketch_linear.train()
             optimizer.zero_grad()
-            positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'][idx].unsqueeze(0).to(device))
-            negative_feature, _ = model.sample_embedding_network(batch_data['negative_img'][idx].unsqueeze(0).to(device))
+            positive_feature, _ = model.sample_embedding_network(batch_data['positive_img'].unsqueeze(0).to(device))
+            negative_feature, _ = model.sample_embedding_network(batch_data['negative_img'].unsqueeze(0).to(device))
             loss = 0
             
             for idx in range(len(batch_data['sketch_imgs'])): # len(batch_data['sketch_imgs']) = batch_size
