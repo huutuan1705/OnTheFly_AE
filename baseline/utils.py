@@ -57,16 +57,17 @@ def get_transform(type, aug_mode=1):
     """
     Get transform for SimCLR with alternating augmentation modes
     """
-    strong_color_jitter = transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.1)
+    strong_color_jitter = transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.3)
     if type == 'train':
         if aug_mode == 1:
             # Focus on geometric augmentation
             transform_list = [
                 transforms.RandomResizedCrop(299, scale=(0.85, 1.0)),
-                # transforms.RandomHorizontalFlip(0.5),
+                transforms.RandomHorizontalFlip(0.5),
                 # transforms.ColorJitter(brightness=0.15, contrast=0.15, saturation=0.15),
-                # transforms.RandomRotation(15),
+                transforms.RandomRotation(15),
                 transforms.ToTensor(),
+                transforms.RandomErasing(p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
             
@@ -74,13 +75,10 @@ def get_transform(type, aug_mode=1):
             # Focus on cutout augmentation
             transform_list = [
                 transforms.Resize(299),  # Weaker crop
-                # transforms.RandomResizedCrop(299, scale=(0.85, 1.0)),
-                # transforms.RandomRotation(5),  # Weaker rotation
-                transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
-                # transforms.RandomGrayscale(p=0.5),  # Add grayscale
-                # transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.8),
+                transforms.RandomApply([strong_color_jitter], p=0.8),
+                transforms.RandomGrayscale(p=0.5),  # Add grayscale
+                transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.8),
                 transforms.ToTensor(),
-                # transforms.RandomErasing(p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
             
