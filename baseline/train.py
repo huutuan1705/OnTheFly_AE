@@ -115,6 +115,14 @@ def evaluate_model(model, dataloader_test):
 
         return top1_accuracy, top5_accuracy, top10_accuracy, meanMA, meanMB, meanOurA, meanOurB
 
+def get_unique_filename(save_dir, base_name="results_log.txt"):
+    filename = base_name
+    name, ext = os.path.splitext(base_name)
+    counter = 0
+    while os.path.exists(os.path.join(save_dir, filename)):
+        counter += 1
+        filename = f"{name}_{counter}{ext}"
+    return filename
 
 def train_model(model, args):
     model = model.to(device)
@@ -191,6 +199,7 @@ def train_model(model, args):
         print('meanOurB       : {:.5f}'.format(meanOurB))
         print('Loss:            {:.5f}'.format(avg_loss))
         
-        with open(os.path.join(args.save_dir, "results_log_2.txt"), "a") as f:
+        filename = get_unique_filename(args.save_dir, "results_log.txt")
+        with open(os.path.join(args.save_dir, filename), "a") as f:
             f.write("Epoch {:d} | Top1: {:.5f} | Top5: {:.5f} | Top10: {:.5f} | MeanA: {:.5f} | MeanB: {:.5f} | meanOurA: {:.5f} | meanOurB: {:.5f} | Loss: {:.5f}\n".format(
                 i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB, avg_loss))
