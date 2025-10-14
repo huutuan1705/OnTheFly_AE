@@ -130,6 +130,8 @@ def train_model(model, args):
     if args.load_pretrained:
         model.load_state_dict(torch.load(args.pretrained_dir), strict=False)
     os.makedirs(args.save_dir, exist_ok=True)
+    filename = get_unique_filename(args.save_dir, "results_log.txt")
+    
     lr = args.lr
     # loss_fn = nn.TripletMarginLoss(margin=args.margin)
     # optimizer = optim.Adam(params=model.parameters(), lr=lr)
@@ -199,7 +201,6 @@ def train_model(model, args):
         print('meanOurB       : {:.5f}'.format(meanOurB))
         print('Loss:            {:.5f}'.format(avg_loss))
         
-        filename = get_unique_filename(args.save_dir, "results_log.txt")
         with open(os.path.join(args.save_dir, filename), "a") as f:
             f.write("Epoch {:d} | Top1: {:.5f} | Top5: {:.5f} | Top10: {:.5f} | MeanA: {:.5f} | MeanB: {:.5f} | meanOurA: {:.5f} | meanOurB: {:.5f} | Loss: {:.5f}\n".format(
                 i_epoch+1, top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB, avg_loss))
