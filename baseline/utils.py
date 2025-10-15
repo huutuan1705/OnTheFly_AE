@@ -65,7 +65,7 @@ def get_transform(type, aug_mode=1):
                 transforms.RandomResizedCrop(299, scale=(0.85, 1.0)),
                 transforms.RandomHorizontalFlip(0.5),
                 transforms.RandomRotation(15),
-                transforms.RandomApply([strong_color_jitter], p=0.8),
+                # transforms.RandomApply([strong_color_jitter], p=0.8),
                 # transforms.RandomGrayscale(p=0.5),  # Add grayscale
                 # transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.8),
                 transforms.ToTensor(),
@@ -77,7 +77,7 @@ def get_transform(type, aug_mode=1):
             # Focus on color augmentation
             transform_list = [
                 transforms.Resize(299),  # Weaker crop
-                # transforms.RandomApply([strong_color_jitter], p=0.8),
+                transforms.RandomApply([strong_color_jitter], p=0.8),
                 transforms.RandomGrayscale(p=0.5),  # Add grayscale
                 transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.8),
                 transforms.ToTensor(),
