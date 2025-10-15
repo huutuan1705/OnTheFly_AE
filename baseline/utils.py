@@ -60,26 +60,26 @@ def get_transform(type, aug_mode=1):
     strong_color_jitter = transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.3)
     if type == 'train':
         if aug_mode == 1:
-            # Focus on geometric augmentation
+            # Focus on shaped augmentation
             transform_list = [
                 transforms.RandomResizedCrop(299, scale=(0.85, 1.0)),
                 transforms.RandomHorizontalFlip(0.5),
                 transforms.RandomRotation(15),
                 transforms.RandomApply([strong_color_jitter], p=0.8),
-                transforms.RandomGrayscale(p=0.5),  # Add grayscale
-                transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.8),
+                # transforms.RandomGrayscale(p=0.5),  # Add grayscale
+                # transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.8),
                 transforms.ToTensor(),
                 transforms.RandomErasing(p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
             
         elif aug_mode == 2:
-            # Focus on cutout augmentation
+            # Focus on color augmentation
             transform_list = [
                 transforms.Resize(299),  # Weaker crop
                 # transforms.RandomApply([strong_color_jitter], p=0.8),
-                # transforms.RandomGrayscale(p=0.5),  # Add grayscale
-                # transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.8),
+                transforms.RandomGrayscale(p=0.5),  # Add grayscale
+                transforms.RandomApply([transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 2.0))], p=0.8),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]
