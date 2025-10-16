@@ -30,26 +30,6 @@ class SelfAttention(nn.Module):
         for x in self.parameters():
             x.requires_grad = False
 
-class Attention_global(nn.Module):
-    def __init__(self):
-        super(Attention_global, self).__init__()
-        self.pool_method =  nn.AdaptiveMaxPool2d(1) # as default
-        self.net = nn.Sequential(nn.Conv2d(2048, 512, kernel_size=1),
-                                 nn.BatchNorm2d(512),
-                                 nn.ReLU(),
-                                 nn.Conv2d(512, 1, kernel_size=1))
-       
-
-        
-    def forward(self, backbone_tensor):
-        backbone_tensor_1 = self.net(backbone_tensor)
-        backbone_tensor_1 = backbone_tensor_1.view(backbone_tensor_1.size(0), -1)
-        backbone_tensor_1 = nn.Softmax(dim=1)(backbone_tensor_1)
-        backbone_tensor_1 = backbone_tensor_1.view(backbone_tensor_1.size(0), 1, backbone_tensor.size(2), backbone_tensor.size(3))
-        fatt = backbone_tensor*backbone_tensor_1
-        fatt1 = backbone_tensor +fatt
-        fatt1 = self.pool_method(fatt1).view(-1, 2048)
-        return  F.normalize(fatt1)
     
 class SketchAttention(nn.Module):
     def __init__(self, args):
@@ -69,7 +49,25 @@ class SketchAttention(nn.Module):
         output = identify * att_out + identify
         output = F.normalize(output)
         return output
+
+class Attention_global(nn.Module):
+    def __init__(self):
+        super(Attention_global, self).__init__()
+        self.pool_method =  nn.AdaptiveMaxPool2d(1) # as default
+        self.net = nn.Sequential(nn.Conv2d(2048, 512, kernel_size=1),
+                                 nn.BatchNorm2d(512),
+                                 nn.ReLU(),
+                                 nn.Conv2d(512, 1, kernel_size=1))
         
+    def forward(self, backbone_tensor):
+        backbone_tensor_1 = self.net(backbone_tensor)
+        backbone_tensor_1 = backbone_tensor_1.view(backbone_tensor_1.size(0), -1)
+        backbone_tensor_1 = nn.Softmax(dim=1)(backbone_tensor_1)
+        backbone_tensor_1 = backbone_tensor_1.view(backbone_tensor_1.size(0), 1, backbone_tensor.size(2), backbone_tensor.size(3))
+        fatt = backbone_tensor*backbone_tensor_1
+        fatt1 = backbone_tensor +fatt
+        fatt1 = self.pool_method(fatt1).view(-1, 2048)
+        return  F.normalize(fatt1)
         
 class Linear_global(nn.Module):
     def __init__(self, feature_num, in_features=2048):
