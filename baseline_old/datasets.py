@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from random import randint
 from PIL import Image
 
-from baseline.utils import get_transform
+from baseline_old.utils import get_transform
 from baseline.rasterize import rasterize_sketch, rasterize_sketch_steps
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -24,7 +24,7 @@ class FGSBIR_Dataset(Dataset):
         self.train_sketch = [x for x in self.coordinate if 'train' in x]
         self.test_sketch = [x for x in self.coordinate if 'test' in x]
         
-        self.train_transform = get_transform(type='train', aug_mode=4)
+        self.train_transform = get_transform('train')
         self.test_transform = get_transform('test')
         
     def __len__(self):
@@ -79,7 +79,6 @@ class FGSBIR_Dataset(Dataset):
             positive_sample = '_'.join(self.test_sketch[item].split('/')[-1].split('_')[:-1])
             positive_path = os.path.join(self.root_dir, 'photo', positive_sample + '.png')
             positive_image = self.test_transform(Image.open(positive_path).convert("RGB"))
-            
             
             sample = {'sketch_imgs': sketch_images, 'sketch_path': sketch_path,
                       'positive_img': positive_image, 'positive_path': positive_sample,
