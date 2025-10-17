@@ -23,9 +23,9 @@ class Model(nn.Module):
             self.linear.apply(init_weights)
             
     def forward(self, batch):
-        sketch_img = batch[f'sketch_img'].to(device)
-        positive_img = batch[f'positive_img'].to(device)
-        negative_img = batch[f'negative_img'].to(device)
+        sketch_img = batch['sketch_img'].to(device)
+        positive_img = batch['positive_img'].to(device)
+        negative_img = batch['negative_img'].to(device)
         
         positive_feature = self.linear(self.attention(self.embedding_network(positive_img)))
         negative_feature = self.linear(self.attention(self.embedding_network(negative_img)))
