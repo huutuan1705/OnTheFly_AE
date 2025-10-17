@@ -11,11 +11,11 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.args = args
         self.embedding_network = InceptionV3(args=args)
-        self.attention = SelfAttention(args)
+        self.attention = Attention_global(args)
         self.linear = Linear_global(feature_num=self.args.output_size)
         
         def init_weights(m):
-            if type(m) == nn.Linear:
+            if type(m) == nn.Linear or type(m) == nn.Conv2d:
                 nn.init.kaiming_normal_(m.weight)
         
         if self.args.use_kaiming_init:
