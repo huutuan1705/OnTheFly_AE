@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from baseline.backbones import InceptionV3
-from baseline.attention import Linear_global, Attention_global
+from baseline.attention import Linear_global, Attention_global, SelfAttention
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -11,7 +11,7 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.args = args
         self.embedding_network = InceptionV3(args=args)
-        self.attention = Attention_global(args)
+        self.attention = SelfAttention(args)
         self.linear = Linear_global(feature_num=self.args.output_size)
         
         def init_weights(m):

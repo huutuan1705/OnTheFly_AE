@@ -133,7 +133,7 @@ def train_model(model, args):
     
     lr = args.lr
     loss_fn = nn.TripletMarginLoss(margin=args.margin)
-    optimizer = optim.AdamW(params=model.embedding_network.parameters(), lr=lr)
+    optimizer = optim.AdamW(params=model.parameters(), lr=lr)
     
     top5, top10, avg_loss = 0, 0, 0
     for i_epoch in range(args.epochs):
