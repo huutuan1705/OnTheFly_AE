@@ -144,8 +144,8 @@ def train_model(model, args):
             model.train()
             optimizer.zero_grad()
 
-            features = model(batch_data)
-            loss = loss_fn(args, features)
+            sketch_feature, positive_feature, negative_feature = model(batch_data)
+            loss = loss_fn(sketch_feature, positive_feature, negative_feature)
             loss.backward()
             optimizer.step()
 
