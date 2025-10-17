@@ -9,7 +9,7 @@ from baseline_old.utils import get_transform
 from random import randint
 from PIL import Image
 
-from rasterize import rasterize_sketch
+from baseline_old.rasterize import rasterize_sketch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
