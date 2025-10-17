@@ -24,7 +24,7 @@ class FGSBIR_Dataset(Dataset):
         self.train_sketch = [x for x in self.coordinate if 'train' in x]
         self.test_sketch = [x for x in self.coordinate if 'test' in x]
         
-        self.train_transform = get_transform(type='train')
+        self.train_transform = get_transform(type='train', aug_mode=4)
         self.test_transform = get_transform('test')
         
     def __len__(self):
