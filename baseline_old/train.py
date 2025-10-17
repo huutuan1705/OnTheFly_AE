@@ -7,7 +7,8 @@ import torch.nn.functional as F
 
 from tqdm import tqdm
 from torch import optim
-from baseline_old.datasets import FGSBIR_Dataset
+from baseline.datasets import FGSBIR_Dataset
+from baseline.utils import loss_fn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -22,7 +23,7 @@ def get_dataloader(args):
         dataset_test, batch_size=args.test_batch_size, shuffle=False, num_workers=int(args.threads))
 
     return dataloader_train, dataloader_test
-
+    
 def evaluate_model(model, dataloader_test):
     with torch.no_grad():
         model.eval()
@@ -36,9 +37,9 @@ def evaluate_model(model, dataloader_test):
             # print(batch['sketch_imgs'].shape) # (1, 25, 3, 299, 299)
             
             for data_sketch in batch['sketch_imgs']:
-                sketch_feature = model.embedding_network(
+                sketch_feature = model.sketch_embedding_network(
                     data_sketch.to(device))
-                sketch_feature = model.linear(model.attention(sketch_feature)) #(25, 2048)
+                sketch_feature = model.sketch_linear(model.sketch_attention(sketch_feature)) #(25, 2048)
                 
                 sketch_features_all = torch.cat((sketch_features_all, sketch_feature.detach()))
 
@@ -47,7 +48,7 @@ def evaluate_model(model, dataloader_test):
             sketch_names.extend(batch['sketch_path'])
 
             if batch['positive_path'][0] not in image_names:
-                positive_feature = model.embedding_network(batch['positive_img'].to(device))
+                positive_feature = model.sample_embedding_network(batch['positive_img'].to(device))
                 positive_feature = model.linear(model.attention(positive_feature))
                 
                 image_array_tests = torch.cat((image_array_tests, positive_feature))
@@ -132,9 +133,14 @@ def train_model(model, args):
     filename = get_unique_filename(args.save_dir, "results_log.txt")
     
     lr = args.lr
-    loss_fn = nn.TripletMarginLoss(margin=args.margin)
-    optimizer = optim.AdamW(params=model.parameters(), lr=lr)
-    
+    # loss_fn = nn.TripletMarginLoss(margin=args.margin)
+    # optimizer = optim.Adam(params=model.parameters(), lr=lr)
+    optimizer = optim.AdamW([
+        {'params': model.sample_embedding_network.parameters(), 'lr': lr},
+        {'params': model.sketch_embedding_network.parameters(), 'lr': lr},
+    ])
+    # scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
+
     top5, top10, avg_loss = 0, 0, 0
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
@@ -144,8 +150,8 @@ def train_model(model, args):
             model.train()
             optimizer.zero_grad()
 
-            sketch_feature, positive_feature, negative_feature = model(batch_data)
-            loss = loss_fn(sketch_feature, positive_feature, negative_feature)
+            features = model(batch_data)
+            loss = loss_fn(args, features)
             loss.backward()
             optimizer.step()
 
@@ -159,28 +165,28 @@ def train_model(model, args):
             top5 = top5_eval
             torch.save(model.state_dict(), os.path.join(args.save_dir, args.dataset_name + '_best_top5.pth'))
             torch.save({
-                        'sample_embedding_network': model.embedding_network.state_dict(),
-                        'sketch_embedding_network': model.embedding_network.state_dict(),
+                        'sample_embedding_network': model.sample_embedding_network.state_dict(),
+                        'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
                     }, args.dataset_name + '_top5_backbone.pth')
             torch.save({'attention': model.attention.state_dict(),
-                            'sketch_attention': model.attention.state_dict(),
+                            'sketch_attention': model.sketch_attention.state_dict(),
                             }, args.dataset_name + '_top5_attention.pth')
             torch.save({'linear': model.linear.state_dict(),
-                            'sketch_linear': model.linear.state_dict(),
+                            'sketch_linear': model.sketch_linear.state_dict(),
                             }, args.dataset_name + '_top5_linear.pth')
 
         if top10_eval > top10:
             top10 = top10_eval
             torch.save(model.state_dict(), os.path.join(args.save_dir, args.dataset_name + '_best_top10.pth'))
             torch.save({
-                        'sample_embedding_network': model.embedding_network.state_dict(),
-                        'sketch_embedding_network': model.embedding_network.state_dict(),
+                        'sample_embedding_network': model.sample_embedding_network.state_dict(),
+                        'sketch_embedding_network': model.sketch_embedding_network.state_dict(),
                     }, args.dataset_name + '_top10_backbone.pth')
             torch.save({'attention': model.attention.state_dict(),
-                            'sketch_attention': model.attention.state_dict(),
+                            'sketch_attention': model.sketch_attention.state_dict(),
                             }, args.dataset_name + '_top10_attention.pth')
             torch.save({'linear': model.linear.state_dict(),
-                            'sketch_linear': model.linear.state_dict(),
+                            'sketch_linear': model.sketch_linear.state_dict(),
                             }, args.dataset_name + '_top10_linear.pth')
             
         torch.save(model.state_dict(), os.path.join(args.save_dir, "last_model.pth"))

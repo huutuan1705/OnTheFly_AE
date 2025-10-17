@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from random import randint
 from PIL import Image
 
-from baseline_old.utils import get_transform
+from baseline.utils import get_transform
 from baseline.rasterize import rasterize_sketch, rasterize_sketch_steps
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -24,7 +24,11 @@ class FGSBIR_Dataset(Dataset):
         self.train_sketch = [x for x in self.coordinate if 'train' in x]
         self.test_sketch = [x for x in self.coordinate if 'test' in x]
         
-        self.train_transform = get_transform('train')
+        self.train_transform_1 = get_transform(type='train', aug_mode=4)
+        # self.train_transform_2 = get_transform(type='train', aug_mode=2)
+        # for i in range(self.args.num_views):
+        #     setattr(self, f"train_transform_{i+1}", get_transform(type='train', aug_mode=i+1))
+            
         self.test_transform = get_transform('test')
         
     def __len__(self):
@@ -57,15 +61,13 @@ class FGSBIR_Dataset(Dataset):
             
             positive_image = Image.open(positive_path).convert("RGB")
             negative_image = Image.open(negative_path).convert("RGB")
+            # negative_image = self.neg_transform(negative_image)
             
-            positive_image = self.train_transform(positive_image)
-            negative_image = self.train_transform(negative_image)
-            sketch_img = self.train_transform(sketch_img)
-            
-            sample = {'sketch_img': sketch_img, 'sketch_path': sketch_path,
-                      'positive_img': positive_image, 'positive_path': positive_sample,
-                      'negative_img': positive_image, 'negative_path': negative_path,
-                      } 
+            for i in range(1, self.args.num_views + 1):
+                trans = getattr(self, f"train_transform_{i}")   # lấy đúng transform_i
+                sample[f'sketch_img_{i}']   = trans(sketch_img)
+                sample[f'positive_img_{i}'] = trans(positive_image)
+                sample[f'negative_img_{i}'] = trans(negative_image)
         
         elif self.mode == "test":
             sketch_path = self.test_sketch[item] 
@@ -79,6 +81,7 @@ class FGSBIR_Dataset(Dataset):
             positive_sample = '_'.join(self.test_sketch[item].split('/')[-1].split('_')[:-1])
             positive_path = os.path.join(self.root_dir, 'photo', positive_sample + '.png')
             positive_image = self.test_transform(Image.open(positive_path).convert("RGB"))
+            
             
             sample = {'sketch_imgs': sketch_images, 'sketch_path': sketch_path,
                       'positive_img': positive_image, 'positive_path': positive_sample,

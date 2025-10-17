@@ -1,7 +1,10 @@
 import torch
 import argparse
-from baseline.model import Siamese_SBIR
-from baseline.train import train_model
+# from baseline.model import Siamese_SBIR
+# from baseline.train import train_model
+
+from baseline_old.model import Siamese_SBIR
+from baseline_old.train import train_model
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
