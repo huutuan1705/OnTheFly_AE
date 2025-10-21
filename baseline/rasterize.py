@@ -28,7 +28,7 @@ def draw_image(vector_image, side=400):
     raster_image = scipy.ndimage.binary_dilation(raster_image) * 255.0
     return raster_image
 
-def draw_image_steps(vector_images, side=400, steps=21):
+def draw_image_steps(vector_images, side=400, steps=20):
     for vector_image in vector_images:
         pixel_length = 0
         sample_freq = list(np.round(np.linspace(0,  len(vector_image), steps)[1:]))
