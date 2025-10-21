@@ -138,41 +138,41 @@ def train_model(model, args):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
 
         losses = []
-        for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
-            model.sketch_embedding_network.eval()
-            model.sample_embedding_network.eval()
-            model.sketch_attention.eval()
-            model.attention.eval()
-            model.linear.eval()
-            model.attn.train()
-            # model.sketch_linear.train()
-            optimizer.zero_grad()
-            positive_features = model.sample_embedding_network(batch_data['positive_img'].to(device))
-            negative_features = model.sample_embedding_network(batch_data['negative_img'].to(device))
-            positive_features = model.linear(model.attention(positive_features))
-            negative_features = model.linear(model.attention(negative_features))
+        # for _, batch_data in enumerate(tqdm(dataloader_train, dynamic_ncols=False)):
+        #     model.sketch_embedding_network.eval()
+        #     model.sample_embedding_network.eval()
+        #     model.sketch_attention.eval()
+        #     model.attention.eval()
+        #     model.linear.eval()
+        #     model.attn.train()
+        #     # model.sketch_linear.train()
+        #     optimizer.zero_grad()
+        #     positive_features = model.sample_embedding_network(batch_data['positive_img'].to(device))
+        #     negative_features = model.sample_embedding_network(batch_data['negative_img'].to(device))
+        #     positive_features = model.linear(model.attention(positive_features))
+        #     negative_features = model.linear(model.attention(negative_features))
             
-            loss = 0
+        #     loss = 0
             
-            for idx in range(len(batch_data['sketch_imgs'])): # len(batch_data['sketch_imgs']) = batch_size
-                sketch_seq_feature = model.sketch_embedding_network(batch_data['sketch_imgs'][idx].to(device))
-                sketch_seq_feature = model.attn(model.sketch_attention(sketch_seq_feature))
+        #     for idx in range(len(batch_data['sketch_imgs'])): # len(batch_data['sketch_imgs']) = batch_size
+        #         sketch_seq_feature = model.sketch_embedding_network(batch_data['sketch_imgs'][idx].to(device))
+        #         sketch_seq_feature = model.attn(model.sketch_attention(sketch_seq_feature))
                 
-                positive_feature = positive_features[idx]
-                negative_feature = negative_features[idx]
+        #         positive_feature = positive_features[idx]
+        #         negative_feature = negative_features[idx]
                 
-                positive_feature = positive_feature.repeat(sketch_seq_feature.shape[0], 1)
-                negative_feature = negative_feature.repeat(sketch_seq_feature.shape[0], 1)
+        #         positive_feature = positive_feature.repeat(sketch_seq_feature.shape[0], 1)
+        #         negative_feature = negative_feature.repeat(sketch_seq_feature.shape[0], 1)
                 
-                loss += loss_fn(sketch_seq_feature, positive_feature, negative_feature)      
+        #         loss += loss_fn(sketch_seq_feature, positive_feature, negative_feature)      
             
-            loss.backward()
-            optimizer.step()
-            # scheduler.step()
+        #     loss.backward()
+        #     optimizer.step()
+        #     # scheduler.step()
 
-            losses.append(loss.item())
+        #     losses.append(loss.item())
 
-        avg_loss = sum(losses) / len(losses)
+        # avg_loss = sum(losses) / len(losses)
                 
         top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(model=model, dataloader_test=dataloader_test)
         if top5_eval > top5:
