@@ -72,7 +72,7 @@ class FGSBIR_Dataset(Dataset):
             sketch_path = self.test_sketch[item] 
             vector_x = self.coordinate[sketch_path]
             
-            list_sketch_imgs = rasterize_sketch_steps(vector_x)
+            list_sketch_imgs = rasterize_sketch_steps(vector_x, self.args.steps)
             
             sketch_raw_imgs = [Image.fromarray(sk_img).convert("RGB") for sk_img in list_sketch_imgs]
             sketch_images = torch.stack([self.test_transform(sk_img) for sk_img in sketch_raw_imgs])
