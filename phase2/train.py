@@ -173,6 +173,7 @@ def train_model(model, args):
             losses.append(loss.item())
 
         avg_loss = sum(losses) / len(losses)
+
                 
         top1_eval, top5_eval, top10_eval, meanA, meanB, meanOurA, meanOurB = evaluate_model(model=model, dataloader_test=dataloader_test)
         if top5_eval > top5:

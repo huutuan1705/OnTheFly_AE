@@ -36,7 +36,7 @@ if __name__ == "__main__":
     
     if args.inference:
         inference_model(model, args)
-    
+
     else:
         if args.load_pretrained is False:
             backbones_state = torch.load(args.pretrained_dir + "/" + args.dataset_name + "_top5_backbone.pth", weights_only=True)
