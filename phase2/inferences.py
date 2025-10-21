@@ -55,23 +55,15 @@ def evaluate_model(model, dataloader_test):
 
         # print("sketch_array_tests[0].shape", sketch_array_tests[0].shape) #(25, 2048)
         num_steps = len(sketch_array_tests[0])
-        avererage_area = []
-        avererage_area_percentile = []
-        mean_rank_ourB = []
-        mean_rank_ourA = []
-        avererage_ourB = []
-        avererage_ourA = []
-        exps = np.linspace(1, num_steps, num_steps) / num_steps
-        factor = np.exp(1 - exps) / np.e
-        sketch_range = []
+        mean_rank = torch.zeros(num_steps, dtype=torch.float64, device=device)
+        mean_rank_percentile = torch.zeros(num_steps, dtype=torch.float64, device=device)
         
         rank_all = torch.zeros(len(sketch_array_tests), num_steps)
         rank_all_percentile = torch.zeros(len(sketch_array_tests), num_steps)
         sketch_range = torch.Tensor(sketch_range)
         
         for i_batch, sampled_batch in enumerate(sketch_array_tests):
-            mean_rank = []
-            mean_rank_percentile = []
+            
             sketch_name = sketch_names[i_batch]
 
             sketch_query_name = '_'.join(
@@ -90,20 +82,15 @@ def evaluate_model(model, dataloader_test):
                 rank_all_percentile[i_batch, i_sketch] = (len(distance) - rank_all[i_batch, i_sketch]) / (len(distance) - 1)
                 
                 if rank_all[i_batch, i_sketch].item() == 0:
-                    mean_rank.append(1.)
+                    mean_rank[i_sketch] += 1.
                 else:
-                    mean_rank.append(1/rank_all[i_batch, i_sketch].item())
-                    # 1/(rank)
-                    mean_rank_percentile.append(rank_all_percentile[i_batch, i_sketch].item())
-                    mean_rank_ourB.append(1/rank_all[i_batch, i_sketch].item() * factor[i_sketch])
-                    mean_rank_ourA.append(rank_all_percentile[i_batch, i_sketch].item()*factor[i_sketch])
-                    
-            avererage_area.append(np.sum(mean_rank)/len(mean_rank))
-            avererage_area_percentile.append(np.sum(mean_rank_percentile)/len(mean_rank_percentile))
-            avererage_ourB.append(np.sum(mean_rank_ourB)/len(mean_rank_ourB))
-            avererage_ourA.append(np.sum(mean_rank_ourA)/len(mean_rank_ourA))
-
-        return avererage_area, avererage_area_percentile, avererage_ourB, avererage_ourA
+                    mean_rank[i_sketch] += 1/rank_all[i_batch, i_sketch].item()
+                    mean_rank_percentile[i_sketch] += rank_all_percentile[i_batch, i_sketch].item()
+            
+        avererage_area = (mean_rank / len(sketch_array_tests)).detach().cpu().tolist()
+        avererage_area_percentile = (mean_rank_percentile / len(sketch_array_tests)).detach().cpu().tolist()
+        
+        return avererage_area, avererage_area_percentile
     
 def inference_model(model, args):
     model = model.to(device)
@@ -112,11 +99,9 @@ def inference_model(model, args):
     for i_epoch in range(args.epochs):
         print(f"Epoch: {i_epoch+1} / {args.epochs}")
         
-        avererage_area, avererage_area_percentile, avererage_ourB, avererage_ourA = evaluate_model(model=model, dataloader_test=dataloader_test)
+        avererage_area, avererage_area_percentile = evaluate_model(model=model, dataloader_test=dataloader_test)
         with open("results.json", "w") as f:
             json.dump({
                 "avererage_area": avererage_area,
                 "avererage_area_percentile": avererage_area_percentile,
-                "avererage_ourB": avererage_ourB,
-                "avererage_ourA": avererage_ourA,
             }, f)
