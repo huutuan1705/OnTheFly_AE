@@ -80,7 +80,7 @@ def evaluate_model(model, dataloader_test):
                 target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
                 distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
                 
-                if sketch_name == "/test/CHARUF012YEL-UK_v1_MustardYellow_12" and i_sketch == 4:
+                if sketch_name == "/test/CHARUF012YEL-UK_v1_MustardYellow_12" and i_sketch == 2:
                     sorted_dist, sorted_idx = torch.sort(distance)
                     top_idx = sorted_idx[:10].tolist()
                     top_names = [image_names[i] for i in top_idx]
