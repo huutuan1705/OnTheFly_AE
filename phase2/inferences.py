@@ -88,8 +88,8 @@ def evaluate_model(model, dataloader_test):
                     mean_rank[i_sketch] += 1/rank_all[i_batch, i_sketch].item()
                     mean_rank_percentile[i_sketch] += rank_all_percentile[i_batch, i_sketch].item()
             
-            print("mean_rank[0]: ", mean_rank[0])
-            print("mean_rank_percentile[0]: ", mean_rank[0])
+            print("mean_rank: ", mean_rank)
+            print("mean_rank_percentile: ", mean_rank)
             break
             
         avererage_area = (mean_rank / len(sketch_array_tests)).detach().cpu().tolist()
