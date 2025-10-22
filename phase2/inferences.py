@@ -90,7 +90,8 @@ def evaluate_model(model, dataloader_test):
                     mean_rank[i_sketch] += 1/rank_all[i_batch, i_sketch].item()
                     mean_rank_percentile[i_sketch] += rank_all_percentile[i_batch, i_sketch].item()
             
-        print(rank_all[:, 0].le(1).sum().numpy())
+        indices = (rank_all[:, 0] <= 1).nonzero(as_tuple=True)[0].tolist()
+        print(indices)
     
 def inference_model(model, args):
     model = model.to(device)
