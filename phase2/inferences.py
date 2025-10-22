@@ -90,14 +90,7 @@ def evaluate_model(model, dataloader_test):
                     mean_rank[i_sketch] += 1/rank_all[i_batch, i_sketch].item()
                     mean_rank_percentile[i_sketch] += rank_all_percentile[i_batch, i_sketch].item()
             
-            # print("mean_rank: ", mean_rank)
-            # print("mean_rank_percentile: ", mean_rank)
-            break
-            
-        avererage_area = (mean_rank / len(sketch_array_tests)).detach().cpu().tolist()
-        avererage_area_percentile = (mean_rank_percentile / len(sketch_array_tests)).detach().cpu().tolist()
-        
-        return avererage_area, avererage_area_percentile
+        print(rank_all[0, :].le(1).sum().numpy())
     
 def inference_model(model, args):
     model = model.to(device)
