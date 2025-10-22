@@ -82,14 +82,16 @@ def evaluate_model(model, dataloader_test):
                 rank_all[i_batch, i_sketch] = distance.le(target_distance).sum()
                 rank_all_percentile[i_batch, i_sketch] = (len(distance) - rank_all[i_batch, i_sketch]) / (len(distance) - 1)
                 
+                print("rank_all[i_batch, i_sketch]: ", rank_all[i_batch, i_sketch])
+                print("rank_all_percentile[i_batch, i_sketch]: ", rank_all_percentile[i_batch, i_sketch])
                 if rank_all[i_batch, i_sketch].item() == 0:
                     mean_rank[i_sketch] += 1.
                 else:
                     mean_rank[i_sketch] += 1/rank_all[i_batch, i_sketch].item()
                     mean_rank_percentile[i_sketch] += rank_all_percentile[i_batch, i_sketch].item()
             
-            print("mean_rank: ", mean_rank)
-            print("mean_rank_percentile: ", mean_rank)
+            # print("mean_rank: ", mean_rank)
+            # print("mean_rank_percentile: ", mean_rank)
             break
             
         avererage_area = (mean_rank / len(sketch_array_tests)).detach().cpu().tolist()
