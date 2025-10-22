@@ -71,8 +71,10 @@ def evaluate_model(model, dataloader_test):
             sketch_features = model.attn(sampled_batch)
             # sketch_features = sampled_batch
             if "CHARUF012YEL-UK_v1_MustardYellow" in sketch_query_name:
+                print(sketch_name)
                 print(sketch_query_name)
                 print(i_batch)
+                
             for i_sketch in range(sampled_batch.shape[0]):
                 # print("sketch_features[i_sketch].shape: ", sketch_features[i_sketch].shape)
                 sketch_feature = sketch_features[i_sketch]
