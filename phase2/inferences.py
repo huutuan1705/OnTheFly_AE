@@ -72,7 +72,6 @@ def evaluate_model(model, dataloader_test):
             # sketch_features = sampled_batch
             if "CHARUF012YEL-UK_v1_MustardYellow" in sketch_query_name:
                 print(sketch_name)
-                print(sketch_query_name)
                 print(i_batch)
                 
             for i_sketch in range(sampled_batch.shape[0]):
