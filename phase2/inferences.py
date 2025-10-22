@@ -77,8 +77,8 @@ def evaluate_model(model, dataloader_test):
                 target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
                 distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
                 
-                print("target_distance: ", target_distance)
-                print("distance: ", distance)
+                # print("target_distance: ", target_distance)
+                # print("distance: ", distance)
                 rank_all[i_batch, i_sketch] = distance.le(target_distance).sum()
                 rank_all_percentile[i_batch, i_sketch] = (len(distance) - rank_all[i_batch, i_sketch]) / (len(distance) - 1)
                 
@@ -87,6 +87,9 @@ def evaluate_model(model, dataloader_test):
                 else:
                     mean_rank[i_sketch] += 1/rank_all[i_batch, i_sketch].item()
                     mean_rank_percentile[i_sketch] += rank_all_percentile[i_batch, i_sketch].item()
+            
+            print("mean_rank[0]: ", mean_rank[0])
+            print("mean_rank_percentile[0]: ", mean_rank[0])
             break
             
         avererage_area = (mean_rank / len(sketch_array_tests)).detach().cpu().tolist()
