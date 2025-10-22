@@ -82,8 +82,8 @@ def evaluate_model(model, dataloader_test):
                 rank_all[i_batch, i_sketch] = distance.le(target_distance).sum()
                 rank_all_percentile[i_batch, i_sketch] = (len(distance) - rank_all[i_batch, i_sketch]) / (len(distance) - 1)
                 
-                print("rank_all[i_batch, i_sketch]: ", rank_all[i_batch, i_sketch])
-                print("rank_all_percentile[i_batch, i_sketch]: ", rank_all_percentile[i_batch, i_sketch])
+                # print("rank_all[i_batch, i_sketch]: ", rank_all[i_batch, i_sketch])
+                # print("rank_all_percentile[i_batch, i_sketch]: ", rank_all_percentile[i_batch, i_sketch])
                 if rank_all[i_batch, i_sketch].item() == 0:
                     mean_rank[i_sketch] += 1.
                 else:
