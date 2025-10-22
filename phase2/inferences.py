@@ -80,18 +80,16 @@ def evaluate_model(model, dataloader_test):
                 target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
                 distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
                 
-                # print("target_distance: ", target_distance)
-                # print("distance: ", distance)
+                if sketch_name == "/test/CHARUF012YEL-UK_v1_MustardYellow_12" and i_sketch == 1:
+                    sorted_dist, sorted_idx = torch.sort(distance)
+                    top_idx = sorted_idx[:10].tolist()
+                    top_names = [image_names[i] for i in top_idx]
+                    
+                    print(top_names)
+                
                 rank_all[i_batch, i_sketch] = distance.le(target_distance).sum()
                 rank_all_percentile[i_batch, i_sketch] = (len(distance) - rank_all[i_batch, i_sketch]) / (len(distance) - 1)
                 
-                # print("rank_all[i_batch, i_sketch]: ", rank_all[i_batch, i_sketch])
-                # print("rank_all_percentile[i_batch, i_sketch]: ", rank_all_percentile[i_batch, i_sketch])
-                if rank_all[i_batch, i_sketch].item() == 0:
-                    mean_rank[i_sketch] += 1.
-                else:
-                    mean_rank[i_sketch] += 1/rank_all[i_batch, i_sketch].item()
-                    mean_rank_percentile[i_sketch] += rank_all_percentile[i_batch, i_sketch].item()
             
         print(rank_all[22, :].numpy())
     
