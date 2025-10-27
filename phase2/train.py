@@ -23,6 +23,7 @@ def get_dataloader(args):
     return dataloader_train, dataloader_test
 
 def get_heats_map(model, args):
+    torch.manual_seed(42)
     _, dataloader_test = get_dataloader(args)
     with torch.no_grad():
         model.eval()
@@ -41,7 +42,7 @@ def get_heats_map(model, args):
             attn_w = attn_w.detach().cpu().numpy()
             attn_w = attn_w[::2, ::2]
 
-            plt.imshow(attn_w, cmap='viridis')
+            plt.imshow(attn_w, cmap='viridis', vmin=0, vmax=1)
             plt.title("Real Attention Map from SSA")
             plt.xlabel("Key Stroke Index")
             plt.ylabel("Query Stroke Index")
