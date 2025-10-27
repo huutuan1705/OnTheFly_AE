@@ -36,7 +36,7 @@ def get_heats_map(model, args):
                     (sketch_features_all, sketch_feature.detach()))
                 
             _, attn_w = model.attn(sketch_features_all, return_attn=True)
-            attn = attn_w[0].mean(0).detach().numpy()
+            attn = attn_w[0].mean(0).detach().cpu().numpy()
 
             plt.imshow(attn, cmap='viridis')
             plt.title("Real Attention Map from SSA")
