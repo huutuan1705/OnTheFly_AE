@@ -38,16 +38,14 @@ def get_heats_map(model, args):
             _, attn_w = model.attn(sketch_features_all.unsqueeze(0), return_attn=True)
             print(attn_w.shape)
             attn_w = attn_w.squeeze(0)
+            attn_w = attn_w.detach().cpu().numpy()
+            attn_w = attn_w[::2, ::2]
 
-            plt.imshow(attn_w.detach().cpu().numpy(), cmap='viridis')
+            plt.imshow(attn_w, cmap='viridis')
             plt.title("Real Attention Map from SSA")
             plt.xlabel("Key Stroke Index")
             plt.ylabel("Query Stroke Index")
             plt.colorbar(label="Attention Weight")
-            ticks = np.arange(0, 21, 4)  # [0, 2, 4, 6, 8, ..., 20]
-
-            plt.xticks(ticks, ticks, fontsize=9)
-            plt.yticks(ticks, ticks, fontsize=9)
             plt.tight_layout()
             plt.savefig("ssa_attention_heatmap.png", dpi=300, bbox_inches='tight')
             plt.show()
