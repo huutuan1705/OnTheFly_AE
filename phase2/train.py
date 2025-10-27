@@ -31,13 +31,14 @@ def get_heats_map(model, args):
             for data_sketch in batch['sketch_imgs']:
                 sketch_feature = model.sketch_embedding_network(
                     data_sketch.to(device))
+                print(sketch_feature.shape)
                 sketch_feature = model.sketch_attention(sketch_feature)
                 sketch_features_all = torch.cat(
                     (sketch_features_all, sketch_feature.detach()))
                 
             _, attn_w = model.attn(sketch_features_all, return_attn=True)
             attn = attn_w[0].mean(0).detach().cpu().numpy()
-            print(attn.shape)
+            
             plt.imshow(attn, cmap='viridis')
             plt.title("Real Attention Map from SSA")
             plt.xlabel("Key Stroke Index")
@@ -47,7 +48,8 @@ def get_heats_map(model, args):
             plt.savefig("ssa_attention_heatmap.png", dpi=300, bbox_inches='tight')
             plt.show()
             
-            break    
+            break 
+           
 def evaluate_model(model, dataloader_test):
     with torch.no_grad():
         model.eval()
