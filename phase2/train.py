@@ -44,7 +44,7 @@ def get_heats_map(model, args):
             plt.xlabel("Key Stroke Index")
             plt.ylabel("Query Stroke Index")
             plt.colorbar(label="Attention Weight")
-            ticks = np.arange(0, 21, 2)  # [0, 2, 4, 6, 8, ..., 20]
+            ticks = np.arange(0, 21, 4)  # [0, 2, 4, 6, 8, ..., 20]
 
             plt.xticks(ticks, ticks, fontsize=9)
             plt.yticks(ticks, ticks, fontsize=9)
