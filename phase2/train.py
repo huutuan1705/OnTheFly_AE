@@ -37,9 +37,9 @@ def get_heats_map(model, args):
                 
             _, attn_w = model.attn(sketch_features_all.unsqueeze(0), return_attn=True)
             print(attn_w.shape)
-            attn = attn_w[0].mean(0).detach().cpu().numpy()
+            attn_w = attn_w.squeeze(0)
 
-            plt.imshow(attn, cmap='viridis')
+            plt.imshow(attn_w.detach().cpu().numpy(), cmap='viridis')
             plt.title("Real Attention Map from SSA")
             plt.xlabel("Key Stroke Index")
             plt.ylabel("Query Stroke Index")
