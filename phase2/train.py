@@ -24,50 +24,31 @@ def get_dataloader(args):
 
 def get_heats_map(model, args):
     _, dataloader_test = get_dataloader(args)
-    model.eval()
-
     with torch.no_grad():
+        model.eval()
         for idx, batch in enumerate(tqdm(dataloader_test)):
-            # gom features stroke-level thành (N, 2048)
-            feats = []
+            sketch_features_all = torch.FloatTensor().to(device)
             for data_sketch in batch['sketch_imgs']:
-                sketch_feature = model.sketch_embedding_network(data_sketch.to(device))
-                print("feat raw:", tuple(sketch_feature.shape))  # kiểm tra
+                sketch_feature = model.sketch_embedding_network(
+                    data_sketch.to(device))
                 sketch_feature = model.sketch_attention(sketch_feature)
-                feats.append(sketch_feature.detach())
+                sketch_features_all = torch.cat(
+                    (sketch_features_all, sketch_feature.detach()))
+                
+            _, attn_w = model.attn(sketch_features_all.unsqueeze(0), return_attn=True)
+            print(attn_w.shape)
+            attn = attn_w[0].mean(0).detach().cpu().numpy()
 
-            sketch_features_all = torch.cat(feats, dim=0)    # (N, 2048)
-            Vs = sketch_features_all.unsqueeze(0)            # (1, N, 2048)
-
-            # Lấy attention weights
-            # Chú ý: forward của bạn mặc định average_heads=True
-            out, attn_w = model.attn(Vs, return_attn=True)   # => (B, N, N) nếu average_heads=True
-
-            aw = attn_w.detach().cpu()
-            print("attn_w shape:", tuple(aw.shape))
-
-            # Chuẩn hoá về (N, N)
-            if aw.ndim == 3:
-                # (B, N, N) -> lấy mẫu đầu
-                A = aw[0].numpy()               # (N, N)  ✅ KHÔNG mean(0) ở đây
-            elif aw.ndim == 4:
-                # (B, H, N, N) -> trung bình theo head
-                A = aw[0].mean(0).numpy()       # (N, N)
-            else:
-                raise ValueError(f"Unexpected attn_w shape: {aw.shape}")
-
-            # Vẽ & lưu
-            plt.figure(figsize=(6,5))
-            plt.imshow(A, cmap='viridis', interpolation='nearest')
+            plt.imshow(attn, cmap='viridis')
             plt.title("Real Attention Map from SSA")
             plt.xlabel("Key Stroke Index")
             plt.ylabel("Query Stroke Index")
             plt.colorbar(label="Attention Weight")
             plt.tight_layout()
-            plt.savefig(f"ssa_attention_heatmap_{idx}.png", dpi=300, bbox_inches='tight')
-            plt.close()
-
-            break
+            plt.savefig("ssa_attention_heatmap.png", dpi=300, bbox_inches='tight')
+            plt.show()
+            
+            break 
            
 def evaluate_model(model, dataloader_test):
     with torch.no_grad():
