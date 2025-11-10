@@ -38,7 +38,7 @@ if __name__ == "__main__":
     if args.heats_map:
         get_heats_map(model, args)
         
-    if args.inference:
+    elif args.inference:
         inference_model(model, args)
 
     else:

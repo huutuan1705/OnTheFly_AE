@@ -47,8 +47,7 @@ def evaluate_model(model, dataloader_test):
                     batch['positive_img'].to(device))
                 positive_feature = model.linear(
                     model.attention(positive_feature))
-                # positive_feature, _ = model.attention(
-                #     model.sample_embedding_network(batch['positive_img'].to(device)))
+                
                 image_array_tests = torch.cat(
                     (image_array_tests, positive_feature))
                 image_names.extend(batch['positive_path'])
@@ -80,11 +79,12 @@ def evaluate_model(model, dataloader_test):
                 target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
                 distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
                 
-                if sketch_name == "/test/CHARUF012YEL-UK_v1_MustardYellow_12" and i_sketch == 2:
+                if sketch_name == "/test/CHARUF012YEL-UK_v1_MustardYellow_12":
                     sorted_dist, sorted_idx = torch.sort(distance)
                     top_idx = sorted_idx[:10].tolist()
                     top_names = [image_names[i] for i in top_idx]
                     
+                    print(i_sketch)
                     print(top_names)
                 
                 rank_all[i_batch, i_sketch] = distance.le(target_distance).sum()
