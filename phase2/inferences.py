@@ -73,8 +73,8 @@ def evaluate_model(model, dataloader_test):
                 
                 prefix_feats  = model.attn(sketch_features[:i_sketch+1])
                 sketch_feature = prefix_feats.mean(dim=0)
-                target_distance = F.pairwise_distance(sketch_feature[-1].to(device), image_array_tests[position_query].to(device))
-                distance = F.pairwise_distance(sketch_feature[-1].unsqueeze(0).to(device), image_array_tests.to(device))
+                target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
+                distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
                 
                 rank_all[i_batch, i_sketch] = distance.le(target_distance).sum()
                 rank_all_percentile[i_batch, i_sketch] = (len(distance) - rank_all[i_batch, i_sketch]) / (len(distance) - 1)
