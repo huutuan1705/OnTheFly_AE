@@ -66,7 +66,9 @@ def evaluate_model(model, dataloader_test):
             sketch_features = model.attn(sampled_batch)
 
             for i_sketch in range(sampled_batch.shape[0]):
-                sketch_feature = sketch_features[i_sketch]
+                # sketch_feature = sketch_features[i_sketch]
+                prefix_feats = sketch_features[:i_sketch+1]
+                sketch_feature = prefix_feats.mean(dim=0)
                 target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
                 distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
                 
