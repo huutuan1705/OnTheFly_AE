@@ -63,14 +63,18 @@ def evaluate_model(model, dataloader_test):
             sketch_query_name = '_'.join(
                 sketch_name.split('/')[-1].split('_')[:-1])
             position_query = image_names.index(sketch_query_name)
-            sketch_features = model.attn(sampled_batch)
+            # sketch_features = model.attn(sampled_batch)
+            sketch_features = sampled_batch
 
             for i_sketch in range(sampled_batch.shape[0]):
                 # sketch_feature = sketch_features[i_sketch]
-                prefix_feats = sketch_features[:i_sketch+1]
+                # target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
+                # distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
+                
+                prefix_feats  = model.attn(sketch_features[:i_sketch+1])
                 sketch_feature = prefix_feats.mean(dim=0)
-                target_distance = F.pairwise_distance(sketch_feature.to(device), image_array_tests[position_query].to(device))
-                distance = F.pairwise_distance(sketch_feature.unsqueeze(0).to(device), image_array_tests.to(device))
+                target_distance = F.pairwise_distance(sketch_feature[-1].to(device), image_array_tests[position_query].to(device))
+                distance = F.pairwise_distance(sketch_feature[-1].unsqueeze(0).to(device), image_array_tests.to(device))
                 
                 rank_all[i_batch, i_sketch] = distance.le(target_distance).sum()
                 rank_all_percentile[i_batch, i_sketch] = (len(distance) - rank_all[i_batch, i_sketch]) / (len(distance) - 1)
